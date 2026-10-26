@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1120">
+<title>Irigasi Purwosari</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a1120;--s1:#111b2f;--s2:#18253d;--ln:#2a3b5c;--tx:#eaf1fb;--mu:#93a6c4;--cy:#22d3ee;--am:#fbbf24;--lm:#a3e635;--rs:#fb7185}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:15px/1.45 "Plus Jakarta Sans",system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:20}
+header h1{font-size:17px;font-weight:800;flex:1}
+header small{color:var(--mu);font-weight:400;display:block;font-size:12px}
+.back{background:var(--s2);border:1px solid var(--ln);border-radius:10px;width:40px;height:40px;font-size:20px}
+main{max-width:980px;margin:0 auto;padding:16px}
+.juru{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:14px}
+.jb{background:var(--s1);border:1px solid var(--ln);border-radius:14px;padding:16px;text-align:left}
+.jb:hover{border-color:var(--cy)}
+.jb b{display:block;font-size:19px;font-weight:800}
+.jb span{color:var(--mu);font-size:13px}
+.lead{color:var(--mu);max-width:56ch}
+input[type=search]{width:100%;background:var(--s1);border:1px solid var(--ln);border-radius:12px;color:var(--tx);padding:12px 14px;font:inherit;margin:14px 0}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:12px 14px;margin-bottom:8px;text-align:left}
+.row:hover{border-color:var(--cy)}
+.row b{font-weight:600}.row em{font-style:normal;color:var(--cy);font-weight:800;text-align:right}
+.row span{color:var(--mu);font-size:13px}
+#map{height:56vh;min-height:320px;border-radius:14px;border:1px solid var(--ln);position:relative}
+.coord{position:absolute;left:10px;bottom:10px;z-index:500;background:#0a1120e6;border:1px solid var(--ln);border-radius:8px;padding:5px 10px;font-size:12px;font-variant-numeric:tabular-nums}
+.leg{display:flex;gap:16px;flex-wrap:wrap;color:var(--mu);font-size:13px;margin:10px 2px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tabs{display:flex;gap:6px;margin:14px 0}
+.tabs button{flex:1;background:var(--s1);border:1px solid var(--ln);border-radius:10px;padding:10px;font-weight:600}
+.tabs button[aria-selected=true]{background:var(--cy);color:#04141a;border-color:var(--cy)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.card{background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:12px 14px}
+.card span{color:var(--mu);font-size:13px}.card b{display:block;font-size:24px;font-weight:800}
+.card b small{font-size:13px;color:var(--mu);font-weight:400}
+h2{font-size:15px;margin:20px 0 10px}
+.bar{display:grid;grid-template-columns:96px 1fr 76px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.bar div{height:14px;background:var(--s2);border-radius:7px;overflow:hidden}
+.bar div i{display:block;height:100%;border-radius:7px}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--ln);text-align:left}
+th{color:var(--mu);font-weight:600;font-size:13px}td:nth-child(n+2){font-variant-numeric:tabular-nums}
+.wrap{overflow-x:auto}
+.note{color:var(--mu);font-size:13px;margin-top:10px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--s2);color:var(--tx)}
+.ed{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:16px 0 4px}
+.ed label{display:grid;gap:4px;color:var(--mu);font-size:13px}
+input[type=number]{background:var(--s1);border:1px solid var(--ln);border-radius:10px;color:var(--tx);padding:10px 12px;font:inherit;width:140px}
+.btn{background:var(--s2);border:1px solid var(--ln);border-radius:10px;padding:10px 14px;font-weight:600}
+.btn.p{background:var(--cy);color:#04141a;border-color:var(--cy)}
+.act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
+.skw{border:1px solid var(--ln);border-radius:14px;background:#0a1120;overflow:hidden}
+.skw svg{display:block;width:100%;height:64vh;touch-action:none;user-select:none}
+.imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
+</style>
+</head>
+<body>
+<header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">Irigasi</h1></header>
+<main id="app"><p class="lead">Memuat data…</p></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,MSG='';
+const $=s=>document.querySelector(s),app=$('#app'),n1=(x,d=1)=>(+x||0).toLocaleString('id-ID',{maximumFractionDigits:d}),
+esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const baku=d=>{if(OV[d.nama]!=null)return OV[d.nama];if(d.bakuEdit!=null)return d.bakuEdit;const x=d.tanam&&d.tanam.baku;if(!x)return d.bakuKmz;return Math.abs(x-d.bakuKmz)/x>.15?Math.max(x,d.bakuKmz):x};
+try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null')}catch(e){}
+fetch('data.json').then(r=>r.json()).then(j=>{DB=j;applyUp();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
+$('#back').onclick=()=>{if(st.d){st.d=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
+function route(){if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
+function home(){
+  $('#ttl').innerHTML='Irigasi Purwosari<small>Periode '+esc(DB.periode)+'</small>';
+  app.innerHTML='<p class="lead">Pilih juru pengairan untuk melihat daerah irigasi yang menjadi tanggung jawab Anda.</p><div class="juru">'+
+  DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
+  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});xl();
+}
+function list(){
+  $('#ttl').innerHTML='Juru '+esc(st.j)+'<small>Pilih daerah irigasi</small>';
+  const a=DB.di.filter(d=>d.juru===st.j);
+  app.innerHTML='<input type="search" id="q" placeholder="Cari daerah irigasi" aria-label="Cari daerah irigasi"><div id="ls"></div>';
+  const draw=()=>{const q=$('#q').value.toLowerCase();$('#ls').innerHTML=a.filter(d=>d.nama.toLowerCase().includes(q)).map(d=>`<button class="row" data-i="${d.id}"><b>DI ${esc(d.nama)}</b><em>${n1(baku(d),0)} ha</em><span>${n1(d.panjangKm,2)} km saluran · ${d.bangunan.length} bangunan</span><span style="text-align:right">peta ${d.tahun}</span></button>`).join('')||'<p class="lead">Tidak ada yang cocok.</p>';
+    $('#ls').querySelectorAll('.row').forEach(b=>b.onclick=()=>{st.d=DB.di.find(d=>d.id==b.dataset.i);st.tab='ring';route()})};
+  $('#q').oninput=draw;draw();
+}
+function detail(){
+  const d=st.d,t=d.tanam;
+  $('#ttl').innerHTML='DI '+esc(d.nama)+'<small>Juru '+esc(d.juru)+' · peta '+d.tahun+'</small>';
+  app.innerHTML='<div id="map"><div class="coord" id="co">Geser peta untuk melihat koordinat</div></div>'+
+  '<div class="leg"><span><i style="background:var(--am)"></i>Baku sawah</span><span><i style="background:var(--cy)"></i>Saluran</span><span><i style="background:var(--lm);border-radius:50%"></i>Bangunan</span></div>'+
+  '<div class="tabs" role="tablist">'+[['ring','Ringkasan'],['skm','Skema'],['deb','Debit'],['bgn','Bangunan']].map(x=>`<button role="tab" data-t="${x[0]}" aria-selected="${st.tab==x[0]}">${x[1]}</button>`).join('')+'</div><div id="tb"></div>';
+  app.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.tab=b.dataset.t;app.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x==b));tab()});
+  drawMap();tab();
+}
+function drawMap(){
+  const d=st.d,sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'}),
+  dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'CARTO · OSM'});
+  map=L.map('map',{layers:[sat]});L.control.layers({'Satelit':sat,'Peta gelap':dark},null,{collapsed:true}).addTo(map);
+  const g=L.featureGroup().addTo(map);
+  d.areal.forEach(a=>L.polygon(a[2],{color:'#fbbf24',weight:2,fillOpacity:.3}).bindPopup(`<b>${esc(a[0]||'Petak')}</b><br>${n1(a[1],2)} ha`).addTo(g));
+  d.saluran.forEach(s=>L.polyline(s[2],{color:'#22d3ee',weight:3.5}).bindPopup(`<b>${esc(s[0]||'Saluran')}</b><br>${n1(s[1],0)} m`).addTo(g));
+  d.bangunan.forEach(b=>L.circleMarker([b[1],b[2]],{radius:7,color:'#04141a',weight:2,fillColor:'#a3e635',fillOpacity:1}).bindPopup(`<b>${esc(b[0]||'Bangunan')}</b><br>${b[1]}, ${b[2]}`).addTo(g));
+  if(g.getBounds().isValid())map.fitBounds(g.getBounds(),{padding:[20,20]});
+  const co=$('#co'),show=p=>co.textContent=p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  map.on('mousemove',e=>show(e.latlng));map.on('moveend',()=>show(map.getCenter()));
+  map.on('click',e=>show(e.latlng));map._g=g;
+}
+function tab(){
+  const d=st.d,t=d.tanam,el=$('#tb');
+  if(st.tab=='skm')return skm(el);
+  if(st.tab=='deb'){
+    el.innerHTML='<div class="wrap"><table><thead><tr><th>Tempat ukur</th><th>Q (lt/dt)</th><th>Tinggi (cm)</th><th>Kond.</th></tr></thead><tbody>'+d.debit.map(x=>`<tr><td>${esc(x.n)}</td><td>${n1(x.q)}</td><td>${n1(x.h)}</td><td>${esc(x.kond||'-')}</td></tr>`).join('')+'</tbody></table></div><p class="note">Debit adalah rata-rata pengukuran tanggal '+esc(DB.periode)+'.</p>';
+  }else if(st.tab=='bgn'){
+    el.innerHTML=d.bangunan.map((b,i)=>`<button class="row" data-i="${i}"><b>${esc(b[0]||'Bangunan '+(i+1))}</b><em>›</em><span>${b[1]}, ${b[2]}</span><span></span></button>`).join('');
+    el.querySelectorAll('.row').forEach(r=>r.onclick=()=>{const b=d.bangunan[r.dataset.i];map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})});
+  }else{
+    const bk=baku(d),rows=t?[['Padi',t.padi,'#a3e635'],['Tebu',t.tebu,'#22d3ee'],['Palawija',t.palawija,'#fbbf24'],['Bero',t.bero,'#fb7185'],['Habis panen',t.panen,'#c4b5fd']]:[];
+    el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div>'+edform(d,bk)+
+    (t?'<h2>Tanaman periode '+esc(DB.periode)+'</h2>'+rows.map(r=>`<div class="bar"><span>${r[0]}</span><div><i style="width:${Math.min(100,bk?r[1]/bk*100:0)}%;background:${r[2]}"></i></div><b>${n1(r[1])} ha</b></div>`).join('')+(t.persiapan?`<p class="note">Persiapan padi (pembibitan dan garap tanah): ${n1(t.persiapan)} ha.</p>`:''):'<p class="note">Data tanaman untuk DI ini belum terbaca dari Excel.</p>')+
+    (t&&Math.abs(t.baku-d.bakuKmz)/Math.max(t.baku,1)>.15?`<p class="note">Luas baku Excel ${n1(t.baku,0)} ha dan poligon peta ${n1(d.bakuKmz,0)} ha berbeda jauh. Yang dipakai adalah nilai terbesar, kecuali sudah diubah.</p>`:'');
+    edbind(d);
+  }
+}
+/*P*/
+const nz=x=>{const v=parseFloat(x);return isFinite(v)?v:0},
+norm=s=>String(s).toLowerCase().replace(/\b(di|sbr|sumber|ters|desa)\b\.?/g,' ').replace(/\(.*?\)/g,' ').replace(/\b(19|20)\d\d\b/g,' ').replace(/\b(ok|sip|fix|fixs|top)\b/g,' ').replace(/[^a-z0-9]/g,''),
+bk=n=>norm(n)+(/\b(sbr|sumber)\b/i.test(n)?'~s':''),
+rv=r=>{const v=Array.from({length:30},(_,i)=>nz(r[i])),sm=(a,b)=>v.slice(a,b).reduce((x,y)=>x+y,0);return{baku:v[2],padi:v[5]+v[8]+v[11]+v[14]+v[17],persiapan:[3,4,6,7,9,10,12,13,15,16].reduce((x,i)=>x+v[i],0),tebu:sm(18,21),palawija:sm(21,24),total:v[24],bero:v[25],panen:v[26]}},
+blocks=rows=>{const T={};let b=null;for(const r of rows){const s=r[1]?String(r[1]).trim():'';if(/^DI/i.test(s)){b=bk(s.replace(/^DI\.?\s*/i,''));T[b]={own:nz(r[2])>0?rv(r):null,ch:[]}}else if(b&&s&&nz(r[2])>0&&!/^(JURU|UPTD|JUMLAH|TOTAL)/i.test(s)){const v=rv(r);v.n=s.toLowerCase();v.o=s;T[b].ch.push(v)}}return T},
+pick=(T,ks)=>{for(const k of ks){const t=T[k];if(!t)continue;if(t.own)return t.own;let ch=t.ch;if(!ch.length)continue;const te=ch.filter(c=>c.n.startsWith('ters'));if(te.length)ch=te;const o={};for(const f in ch[0])if(f!='n'&&f!='o')o[f]=ch.reduce((s,c)=>s+c[f],0);return o}return null},
+tersOf=(T,ks)=>{for(const k of ks){const t=T[k];if(!t)continue;const r=t.ch.filter(c=>c.n.startsWith('ters')).slice(0,60).map(c=>({n:c.o,baku:+c.baku.toFixed(2),padi:+c.padi.toFixed(2),tebu:+c.tebu.toFixed(2),palawija:+c.palawija.toFixed(2),bero:+c.bero.toFixed(2),panen:+c.panen.toFixed(2)}));if(r.length)return r}return[]},
+deb=rows=>{const D={},ex=['JURU PENGAIRAN','UPTD','PURWOSARI'];let cd=null,nm=null,ty,le,ko;rows.forEach((r,i)=>{const c=r[1]?String(r[1]):'';if(c&&c===c.toUpperCase()&&/[A-Z]/.test(c)&&!ex.includes(c))cd=norm(c);if(r[2]&&String(r[2]).trim()){nm=String(r[2]).trim();ty=r[4];le=r[5];ko=r[6]}
+ if(r[8]=='Q->'&&cd&&nm&&i>0&&rows[i-1][8]=='H->'){const q=r.slice(9,19).filter(x=>typeof x=='number'),h=rows[i-1].slice(9,19).filter(x=>typeof x=='number'),a=x=>x.reduce((s,y)=>s+y,0)/x.length;if(q.length&&nm!='Limpasan')(D[cd]=D[cd]||{})[nm]={n:nm,q:+a(q).toFixed(1),h:h.length?+a(h).toFixed(1):0,tipe:ty,lebar:le,kond:ko}}});return D};
+/*E*/
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const applyUp=()=>{if(!UP)return;DB.periode=UP.periode;DB.di.forEach(d=>{if(UP.t[d.nama])d.tanam=UP.t[d.nama];if(UP.q[d.nama])d.debit=UP.q[d.nama];if(UP.s&&UP.s[d.nama])d.ters=UP.s[d.nama]})};
+function edform(d,bk){return '<form class="ed" id="ed"><label>Luas baku (ha)<input type="number" step="0.1" min="0" id="bk" value="'+(+bk).toFixed(1)+'"></label><button class="btn p">Simpan</button>'+(OV[d.nama]!=null?'<button type="button" class="btn" id="rs">Kembalikan</button>':'')+'</form><p class="note">Perubahan luas baku tersimpan di perangkat ini.</p>'}
+function edbind(d){$('#ed').onsubmit=e=>{e.preventDefault();const v=parseFloat($('#bk').value);if(v>=0){OV[d.nama]=v;save('ov',OV);tab()}};const r=$('#rs');if(r)r.onclick=()=>{delete OV[d.nama];save('ov',OV);tab()}}
+function xl(){
+  const h=document.createElement('section');h.className='imp';
+  h.innerHTML='<h2>Perbarui data tanaman</h2><p class="lead">Pilih file Excel laporan tanaman dan debit dengan format yang sama (sheet 5, 5a, dan 06). Hasilnya langsung tampil di perangkat ini.</p><input type="file" id="xf" accept=".xlsx,.xlsm" aria-label="File Excel"><p class="note" id="xs"></p><div class="act"><button class="btn p" id="dl">Unduh data.json untuk dibagikan</button>'+(UP?'<button class="btn" id="rx">Hapus pembaruan di perangkat ini</button>':'')+'</div><p class="note">Agar semua juru melihat data yang sama, unggah data.json hasil unduhan ke repo GitHub menggantikan yang lama.</p>';
+  app.appendChild(h);
+  $('#xs').textContent=MSG||(UP?'Pembaruan aktif di perangkat ini, periode '+UP.periode+'.':'Periode data saat ini: '+DB.periode+'.');
+  $('#xf').onchange=imp;$('#dl').onclick=dl;const r=$('#rx');if(r)r.onclick=()=>{try{localStorage.removeItem('up')}catch(e){}location.reload()};
+}
+function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
+async function imp(e){
+  const f=e.target.files[0];if(!f)return;$('#xs').textContent='Membaca file…';
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}),g=re=>{const n=wb.SheetNames.find(x=>re.test(x.trim().toLowerCase()));return n?XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null}):null},
+    r5=g(/^5\s*-/),r5a=g(/^5a\b/)||[],r6=g(/^0?6\b/);
+    if(!r5||!r6)throw new Error('sheet 5 atau 06 tidak ditemukan');
+    const T5=blocks(r5),T5a=blocks(r5a),Q=deb(r6),t={},q={},sm={},miss=[];
+    DB.di.forEach(d=>{const x=pick(T5,d.xk||[])||pick(T5a,d.xk||[]);x?t[d.nama]=x:miss.push(d.nama);const dq=Q[d.dk];if(dq)q[d.nama]=Object.values(dq);const ts=tersOf(T5a,d.xk||[]);if(ts.length)sm[d.nama]=ts});
+    let per=DB.periode;for(const r of r5.slice(0,10))for(const c of r)if(typeof c=='string'&&/PERIODE/i.test(c))per=c.replace(/^\s*PERIODE\s*(Tanggal)?\s*/i,'').replace(/\s+/g,' ').trim();
+    UP={periode:per,t,q,s:sm};save('up',UP);applyUp();
+    MSG='Selesai: '+Object.keys(t).length+' DI diperbarui, periode '+per+'.'+(miss.length?' Tidak ditemukan di Excel: '+miss.join(', ')+'.':'');
+  }catch(err){MSG='Gagal membaca file: '+err.message}
+  route();
+}
+
+const SK={},nk=s=>String(s).toLowerCase().replace(/^ters\.?\s*/,'').replace(/[^a-z0-9]/g,'');
+const sub=(a,b)=>{let j=0;b=b.toLowerCase();for(const c of a.toLowerCase()){j=b.indexOf(c,j);if(j<0)return false;j++}return true};
+function bFind(d,s){
+  s=String(s).trim();let m;
+  if(m=s.match(/^B+\.?\s*([A-Z]{1,4})\.?\s*(\d+)/i)){const rx=new RegExp('(^|[^a-z])'+m[1]+'\\s*\\.?\\s*'+m[2]+'(?!\\d)','i');return d.bangunan.find(b=>rx.test(b[0]))}
+  if(m=s.match(/^Bendung\/?\s*(.+)/i)){const rx=new RegExp('Bd\\.?\\s*'+m[1].trim().replace(/[^a-z0-9 ]/ig,'.?'),'i');return d.bangunan.find(b=>rx.test(b[0]))}
+  if(m=s.match(/^(.+?)\s+(\d+)\s*(ki|ka|tg)\b/i))return d.bangunan.find(b=>{const q=b[0].match(/^\d*\s*([A-Za-z]{1,4})\.?\s*(\d+)\s*(ki|ka|tg)$/i);return q&&q[2]==m[2]&&q[3].toLowerCase()==m[3].toLowerCase()&&sub(q[1],m[1])})
+}
+async function skm(el){
+  const d=st.d;el.innerHTML='<p class="note">Memuat skema…</p>';
+  try{if(!SK[d.id]){const r=await fetch('skema/'+d.id+'.json');if(!r.ok)throw 0;SK[d.id]=await r.json()}}catch(e){el.innerHTML='<p class="lead">Skema belum tersedia. Pastikan folder skema ada di repo.</p>';return}
+  if(st.tab!='skm'||st.d!==d)return;
+  const S=SK[d.id],tm={},dm={},col={p:'#ff5d5d',s:'#ffb454',t:'#2ee6c8',b:'#a3e635',x:'#6f84a8'},hot={};
+  d.ters.forEach(t=>tm[nk(t.n)]=t);d.debit.forEach(x=>dm[nk(x.n)]=x);
+  let h='<div class="leg"><span><i style="background:#ff5d5d"></i>Primer</span><span><i style="background:#ffb454"></i>Sekunder</span><span><i style="background:#2ee6c8"></i>Tersier</span><span><i style="background:#fbbf24"></i>Petak</span><span><i style="background:#a3e635"></i>Bangunan/bendung</span></div>'+
+  `<div class="skw"><svg id="sk" viewBox="0 0 ${S.w} ${S.h}" role="img" aria-label="Skema jaringan irigasi">`;
+  for(const c in S.P)h+=`<path d="${S.P[c]}" fill="none" stroke="${col[c]}" stroke-width="${c=='x'?1:2}" vector-effect="non-scaling-stroke"/>`;
+  S.C.forEach(c=>h+=`<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="none" stroke="${col[c[3]]||col.x}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`);
+  S.T.forEach((t,i)=>{
+    const [x,y,hh,rot,tx,att]=t,L=tx.split('\n'),k=nk(L[0]),fs=hh*.95,
+    ty=k in tm?'t':/^B+\.?\s*[A-Z]{1,4}\.?\s*\d+/i.test(L[0])?'n':/^Bendung/i.test(L[0])?'d':k in dm?'q':'',
+    anc=[1,4,7].includes(att)?'start':[3,6,9].includes(att)?'end':'middle',dy=att<=3?fs*.85:att<=6?fs*.35:0,
+    w=Math.max(...L.map(l=>l.length))*fs*.55,bx=anc=='start'?x:anc=='end'?x-w:x-w/2,ry=att<=3?y:att<=6?y-fs*.5:y-fs;
+    if(ty){hot[i]=ty;h+=`<rect x="${bx-1}" y="${ry-1}" width="${w+2}" height="${fs*1.2*L.length+2}" fill="transparent" data-i="${i}" style="cursor:pointer"/>`}
+    h+=`<text x="${x}" y="${y+dy}" font-size="${fs}" text-anchor="${anc}" fill="${ty=='t'?'#fbbf24':ty?'#a3e635':'#e8eef7'}" transform="rotate(${-rot} ${x} ${y})" style="pointer-events:none">`+L.map((l,j)=>`<tspan x="${x}" dy="${j?fs*1.15:0}">${esc(l)}</tspan>`).join('')+'</text>';
+  });
+  el.innerHTML=h+'</svg></div><div id="pc" class="note">Ketuk huruf berwarna (petak, bangunan bagi, bendung) untuk melihat datanya. Geser dan cubit untuk memperbesar, ketuk dua kali untuk mengembalikan.</div>';
+  const svg=$('#sk'),mvr=panzoom(svg,S);
+  svg.addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!=null&&!mvr())skInfo(S,+i,tm,dm)});
+}
+function skInfo(S,i,tm,dm){
+  const d=st.d,t=S.T[i],L=t[4].split('\n'),k=nk(L[0]),p=$('#pc'),dist=u=>Math.hypot(u[0]-t[0],u[1]-t[1]);
+  const near=S.T.filter(u=>u!==t&&Math.abs(u[0]-t[0])<70&&Math.abs(u[1]-t[1])<35).sort((a,b)=>dist(a)-dist(b)),
+  ha=near.find(u=>/\bha\b/i.test(u[4])),q=near.find(u=>/l\/det|liter/i.test(u[4])),tr=tm[k],db=dm[k]||(tr&&dm[nk(tr.n)]),b=bFind(d,t[4].replace(/\n/g,' '));
+  let h=`<h2 style="margin-top:6px">${esc(L[0])}</h2>`;
+  if(ha||q)h+=`<p class="note">Rencana di skema: ${ha?esc(ha[4].split('\n')[0]):'-'} · ${q?esc(q[4].split('\n')[0]):'-'}</p>`;
+  if(tr)h+='<div class="cards">'+[['Baku',tr.baku],['Padi',tr.padi],['Tebu',tr.tebu],['Palawija',tr.palawija],['Bero',tr.bero],['Habis panen',tr.panen]].map(a=>`<div class="card"><span>${a[0]}</span><b>${n1(a[1])} <small>ha</small></b></div>`).join('')+'</div>';
+  if(db)h+=`<p class="note">Debit terukur (${esc(db.n)}): <b>${n1(db.q)} lt/dt</b>, tinggi air ${n1(db.h)} cm.</p>`;
+  if(!tr&&!db)h+='<p class="note">Belum ada data Excel yang cocok dengan label ini.</p>';
+  p.innerHTML=h+(b?'<div class="act"><button class="btn p" id="gm">Lihat di peta</button></div>':'');
+  if(b)$('#gm').onclick=()=>{map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})};
+}
+function panzoom(svg,S){
+  let vb=[0,0,S.w,S.h],pts=new Map(),pd=0,mv=0;const set=()=>svg.setAttribute('viewBox',vb.join(' ')),
+  g=e=>{const r=svg.getBoundingClientRect(),sc=Math.max(vb[2]/r.width,vb[3]/r.height);return{sc,x:vb[0]+(e.clientX-r.left-(r.width-vb[2]/sc)/2)*sc,y:vb[1]+(e.clientY-r.top-(r.height-vb[3]/sc)/2)*sc}},
+  zoom=(f,e)=>{const a=g(e),nw=Math.min(S.w*1.3,Math.max(S.w/40,vb[2]*f)),k=nw/vb[2];vb=[a.x-(a.x-vb[0])*k,a.y-(a.y-vb[1])*k,nw,vb[3]*k];set()};
+  svg.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY>0?1.2:1/1.2,e)},{passive:false});
+  svg.onpointerdown=e=>{pts.set(e.pointerId,[e.clientX,e.clientY]);mv=0;pd=0};
+  svg.onpointermove=e=>{if(!pts.has(e.pointerId))return;const o=pts.get(e.pointerId),n=[e.clientX,e.clientY];pts.set(e.pointerId,n);
+    if(pts.size==1){const a=g(e);vb[0]-=(n[0]-o[0])*a.sc;vb[1]-=(n[1]-o[1])*a.sc;mv+=Math.abs(n[0]-o[0])+Math.abs(n[1]-o[1]);set()}
+    else if(pts.size==2){const[p,q]=[...pts.values()],dd=Math.hypot(p[0]-q[0],p[1]-q[1]);if(pd)zoom(pd/dd,{clientX:(p[0]+q[0])/2,clientY:(p[1]+q[1])/2});pd=dd;mv=99}};
+  svg.onpointerup=svg.onpointercancel=e=>{pts.delete(e.pointerId);pd=0};
+  svg.ondblclick=()=>{vb=[0,0,S.w,S.h];set()};
+  return()=>mv>6;
+}
+
+</script>
+</body>
+</html>

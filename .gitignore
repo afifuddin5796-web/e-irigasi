@@ -1,0 +1,12 @@
+# Data sumber mentah (besar dan tidak perlu ikut diunggah)
+data_sumber/*
+!data_sumber/README.md
+*.dwg
+*.dxf
+*.kmz
+*.xlsx
+~$*
+# Lain-lain
+__pycache__/
+.DS_Store
+Thumbs.db
