@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a1120">
-<title>Irigasi Purwosari</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="e-Irigasi">
+<title>e-Irigasi</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -65,7 +70,7 @@ input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
 </style>
 </head>
 <body>
-<header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">Irigasi</h1></header>
+<header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">e-Irigasi</h1></header>
 <main id="app"><p class="lead">Memuat data…</p></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -79,7 +84,7 @@ fetch('data.json').then(r=>r.json()).then(j=>{DB=j;applyUp();route()}).catch(()=
 $('#back').onclick=()=>{if(st.d){st.d=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
 function route(){if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
 function home(){
-  $('#ttl').innerHTML='Irigasi Purwosari<small>Periode '+esc(DB.periode)+'</small>';
+  $('#ttl').innerHTML='e-Irigasi<small>UPTD Purwosari · Periode '+esc(DB.periode)+'</small>';
   app.innerHTML='<p class="lead">Pilih juru pengairan untuk melihat daerah irigasi yang menjadi tanggung jawab Anda.</p><div class="juru">'+
   DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
   app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});xl();
@@ -224,6 +229,7 @@ function panzoom(svg,S){
   return()=>mv>6;
 }
 
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
