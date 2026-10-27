@@ -40,7 +40,7 @@ input[type=search]{width:100%;background:var(--s1);border:1px solid var(--ln);bo
 .leg{display:flex;gap:16px;flex-wrap:wrap;color:var(--mu);font-size:13px;margin:10px 2px}
 .leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .tabs{display:flex;gap:6px;margin:14px 0}
-.tabs button{flex:1;background:var(--s1);border:1px solid var(--ln);border-radius:10px;padding:10px;font-weight:600}
+.tabs button{flex:1;background:var(--s1);border:1px solid var(--ln);border-radius:10px;padding:10px 2px;font-size:13px;font-weight:600}
 .tabs button[aria-selected=true]{background:var(--cy);color:#04141a;border-color:var(--cy)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .card{background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:12px 14px}
@@ -67,6 +67,17 @@ input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
 .skw{border:1px solid var(--ln);border-radius:14px;background:#0a1120;overflow:hidden}
 .skw svg{display:block;width:100%;height:64vh;touch-action:none;user-select:none}
 .osmd{filter:invert(1) hue-rotate(180deg) brightness(.95) contrast(.9)}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--ln);background:var(--s1);cursor:pointer;display:block}
+.fm{display:grid;gap:10px;background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:14px;margin:6px 0 4px}
+.fm label,.lbl{display:grid;gap:4px;color:var(--mu);font-size:13px}
+.fm select,.fm input[type=text],.lbi select{background:var(--s2);border:1px solid var(--ln);border-radius:10px;color:var(--tx);padding:10px 12px;font:inherit;width:100%}
+.lb{position:fixed;inset:0;z-index:2000;background:#050a14f2;display:grid;place-items:center;padding:12px;overflow:auto}
+.lbi{max-width:760px;width:100%;display:grid;gap:10px}.lbi img{width:100%;max-height:62vh;object-fit:contain;border-radius:12px;background:#000}
+.cb{background:var(--s2);border:1px solid var(--ln);border-radius:6px;color:var(--tx);padding:3px 9px;font:inherit;font-size:12px;margin-left:6px;text-decoration:none;cursor:pointer}
+a.btn{text-decoration:none;color:var(--tx);display:inline-block}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--cy);color:#04141a;font-weight:600;border-radius:10px;padding:10px 16px;z-index:3000;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
 .imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
 </style>
 </head>
@@ -74,6 +85,7 @@ input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
 <header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">e-Irigasi</h1></header>
 <main id="app"><p class="lead">Memuat data…</p></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,MSG='';
@@ -101,9 +113,9 @@ function list(){
 function detail(){
   const d=st.d,t=d.tanam;
   $('#ttl').innerHTML='DI '+esc(d.nama)+'<small>Juru '+esc(d.juru)+' · peta '+d.tahun+'</small>';
-  app.innerHTML='<div id="map"><div class="coord" id="co">Geser peta untuk melihat koordinat</div></div>'+
+  app.innerHTML='<div id="map"><div class="coord"><span id="co">Geser peta untuk melihat koordinat</span><button class="cb" id="cps" type="button">Salin</button><a class="cb" id="cmp" target="_blank" rel="noopener">Maps</a></div></div>'+
   '<div class="leg"><span><i style="background:var(--am)"></i>Baku sawah</span><span><i style="background:var(--cy)"></i>Saluran</span><span><i style="background:var(--lm);border-radius:50%"></i>Bangunan</span></div>'+
-  '<div class="tabs" role="tablist">'+[['ring','Ringkasan'],['skm','Skema'],['deb','Debit'],['bgn','Bangunan']].map(x=>`<button role="tab" data-t="${x[0]}" aria-selected="${st.tab==x[0]}">${x[1]}</button>`).join('')+'</div><div id="tb"></div>';
+  '<div class="leg" id="lgk" hidden>'+KL.map(k=>`<span><i style="background:${k[2]};border-radius:50%"></i>${k[1]}</span>`).join('')+'</div><div class="tabs" role="tablist">'+[['ring','Ringkasan'],['skm','Skema'],['deb','Debit'],['bgn','Bangunan'],['fto','Foto']].map(x=>`<button role="tab" data-t="${x[0]}" aria-selected="${st.tab==x[0]}">${x[1]}</button>`).join('')+'</div><div id="tb"></div>';
   app.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.tab=b.dataset.t;app.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x==b));tab()});
   drawMap();tab();
 }
@@ -115,20 +127,21 @@ function drawMap(){
   const g=L.featureGroup().addTo(map);
   d.areal.forEach(a=>L.polygon(a[2],{color:'#fbbf24',weight:2,fillOpacity:.3}).bindPopup(`<b>${esc(a[0]||'Petak')}</b><br>${n1(a[1],2)} ha`).addTo(g));
   d.saluran.forEach(s=>L.polyline(s[2],{color:'#22d3ee',weight:3.5}).bindPopup(`<b>${esc(s[0]||'Saluran')}</b><br>${n1(s[1],0)} m`).addTo(g));
-  d.bangunan.forEach(b=>L.circleMarker([b[1],b[2]],{radius:7,color:'#04141a',weight:2,fillColor:'#a3e635',fillOpacity:1}).bindPopup(`<b>${esc(b[0]||'Bangunan')}</b><br>${b[1]}, ${b[2]}`).addTo(g));
+  map._mk={};d.bangunan.forEach(b=>{map._mk[b[0]]=L.circleMarker([b[1],b[2]],{radius:7,color:'#04141a',weight:2,fillColor:'#a3e635',fillOpacity:1}).bindPopup(()=>popB(d,b)).addTo(g)});
   if(g.getBounds().isValid())map.fitBounds(g.getBounds(),{padding:[20,20]});
-  const co=$('#co'),show=p=>co.textContent=p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  const co=$('#co'),show=p=>{co.textContent=p.lat.toFixed(5)+', '+p.lng.toFixed(5);$('#cmp').href=mapsUrl(p.lat,p.lng)};
   map.on('mousemove',e=>show(e.latlng));map.on('moveend',()=>show(map.getCenter()));
   map.on('click',e=>show(e.latlng));map._g=g;
+  L.DomEvent.disableClickPropagation(co.parentNode);$('#cps').onclick=()=>{const t=co.textContent;if(/^-?\d/.test(t))salin(t)};if(fotoOn())muatLap(d).then(warnai);
 }
 function tab(){
   const d=st.d,t=d.tanam,el=$('#tb');
   if(st.tab=='skm')return skm(el);
+  if(st.tab=='fto')return fto(el);
   if(st.tab=='deb'){
     el.innerHTML='<div class="wrap"><table><thead><tr><th>Tempat ukur</th><th>Q (lt/dt)</th><th>Tinggi (cm)</th><th>Kond.</th></tr></thead><tbody>'+d.debit.map(x=>`<tr><td>${esc(x.n)}</td><td>${n1(x.q)}</td><td>${n1(x.h)}</td><td>${esc(x.kond||'-')}</td></tr>`).join('')+'</tbody></table></div><p class="note">Debit adalah rata-rata pengukuran tanggal '+esc(DB.periode)+'.</p>';
   }else if(st.tab=='bgn'){
-    el.innerHTML=d.bangunan.map((b,i)=>`<button class="row" data-i="${i}"><b>${esc(b[0]||'Bangunan '+(i+1))}</b><em>›</em><span>${b[1]}, ${b[2]}</span><span></span></button>`).join('');
-    el.querySelectorAll('.row').forEach(r=>r.onclick=()=>{const b=d.bangunan[r.dataset.i];map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})});
+    drawBgn(el,d);if(fotoOn())muatLap(d).then(()=>{if(st.tab=='bgn'&&st.d===d)drawBgn(el,d)});
   }else{
     const bk=baku(d),rows=t?[['Padi',t.padi,'#a3e635'],['Tebu',t.tebu,'#22d3ee'],['Palawija',t.palawija,'#fbbf24'],['Bero',t.bero,'#fb7185'],['Habis panen',t.panen,'#c4b5fd']]:[];
     el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div>'+edform(d,bk)+
@@ -232,6 +245,111 @@ function panzoom(svg,S){
 }
 
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+/*F*/
+const CF=()=>window.CFG||{},fotoOn=()=>!!(CF().SUPABASE_URL&&CF().SUPABASE_KEY),
+slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'x',
+sb=(p,o={})=>fetch(CF().SUPABASE_URL+p,{...o,headers:{apikey:CF().SUPABASE_KEY,Authorization:'Bearer '+CF().SUPABASE_KEY,...(o.headers||{})}}),
+enc=p=>p.split('/').map(encodeURIComponent).join('/'),
+pub=p=>CF().SUPABASE_URL+'/storage/v1/object/public/foto/'+enc(p);
+async function kirim(it){
+  for(const [p,b] of [[it.path,it.full],[it.tpath,it.thumb]]){
+    const r=await sb('/storage/v1/object/foto/'+enc(p),{method:'POST',body:b,headers:{'Content-Type':'image/jpeg'}});
+    if(!r.ok&&r.status!=409)throw new Error('unggah '+r.status)}
+  const r=await sb('/rest/v1/foto?on_conflict=path',{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=minimal,resolution=ignore-duplicates'},
+    body:JSON.stringify({di_nama:it.nama,folder:it.folder,nomor:it.nomor,bangunan:it.bangunan||null,path:it.path,thumb:it.tpath,oleh:it.oleh||null,diambil:it.diambil||null})});
+  if(!r.ok)throw new Error('catat '+r.status)}
+/*E2*/
+const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('e-irigasi',1);r.onupgradeneeded=()=>r.result.createObjectStore('q',{keyPath:'id'});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}),
+qop=async(m,f)=>{const db=await idb();return new Promise((ok,no)=>{const t=db.transaction('q',m),r=f(t.objectStore('q'));t.oncomplete=()=>ok(r.result);t.onerror=()=>no(t.error)})},
+qall=()=>qop('readonly',s=>s.getAll()).catch(()=>[]);
+async function kecil(file,maks,q){const bm=await createImageBitmap(file),k=Math.min(1,maks/Math.max(bm.width,bm.height)),c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',q))}
+/*H*/
+const KL=[['baik','Baik','#38bdf8'],['rusak ringan','Rusak ringan','#fbbf24'],['rusak sedang','Rusak sedang','#fb923c'],['rusak berat','Rusak berat','#fb7185']],
+KW=Object.fromEntries(KL.map(k=>[k[0],k[2]])),KN=Object.fromEntries(KL.map(k=>[k[0],k[1]])),LP={},FS={},
+mapsUrl=(a,b)=>'https://www.google.com/maps/search/?api=1&query='+a+','+b,
+jarak=(a,b,c,e)=>{const r=x=>x*Math.PI/180,p=r(c-a),l=r(e-b),q=Math.sin(p/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(l/2)**2;return 12742000*Math.asin(Math.sqrt(q))},
+fu=x=>x.statis?x.path:pub(x.path),ft=x=>x.statis?(x.thumb||x.path):pub(x.thumb||x.path),
+lapTerakhir=(d,n)=>(LP[d.nama]||[]).find(x=>x.bangunan===n);
+function toast(t){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=t;e.className='on';clearTimeout(e._t);e._t=setTimeout(()=>e.className='',2200)}
+async function salin(t){try{await navigator.clipboard.writeText(t);toast('Koordinat disalin')}catch(e){prompt('Salin koordinat:',t)}}
+async function kirimLap(it){const r=await sb('/rest/v1/laporan',{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({di_nama:it.nama,bangunan:it.bangunan,kondisi:it.kondisi,catatan:it.catatan,oleh:it.oleh,lat:it.lat,lon:it.lon,akurasi:it.akurasi})});if(!r.ok)throw new Error('laporan '+r.status)}
+async function muatLap(d){if(!fotoOn())return[];try{const r=await sb('/rest/v1/laporan?di_nama=eq.'+encodeURIComponent(d.nama)+'&select=*&order=dibuat.desc&limit=1000');if(r.ok)LP[d.nama]=await r.json()}catch(e){}return LP[d.nama]||[]}
+async function muatStatis(d){if(FS[d.nama])return FS[d.nama];let a=[];try{const r=await fetch('foto/'+slug(d.nama)+'.json');if(r.ok)a=(await r.json()).map(x=>({...x,statis:true}))}catch(e){}return FS[d.nama]=a}
+async function muatFoto(d){const S=await muatStatis(d);let L=[],online=false;if(fotoOn()){try{const r=await sb('/rest/v1/foto?di_nama=eq.'+encodeURIComponent(d.nama)+'&select=*&order=folder,nomor&limit=2000');if(r.ok){L=await r.json();online=true}}catch(e){}}return{all:S.concat(L),online}}
+/*E3*/
+function warnai(){if(!map||!map._mk)return;const d=st.d;for(const b of d.bangunan){const m=map._mk[b[0]],l=lapTerakhir(d,b[0]);if(m&&l&&KW[l.kondisi])m.setStyle({fillColor:KW[l.kondisi]})}const g=$('#lgk');if(g&&(LP[d.nama]||[]).length)g.hidden=false}
+function popB(d,b){
+  const e=document.createElement('div'),l=lapTerakhir(d,b[0]);
+  e.innerHTML=`<b>${esc(b[0]||'Bangunan')}</b><br>${b[1]}, ${b[2]}${l?`<br><span style="color:${KW[l.kondisi]}">${esc(KN[l.kondisi]||l.kondisi)}</span> · ${new Date(l.dibuat).toLocaleDateString('id-ID')}`:''}<div style="margin-top:8px"><button class="cb" data-a="s" style="margin-left:0">Salin</button><a class="cb" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Maps</a><button class="cb" data-a="d">Detail</button></div>`;
+  e.querySelector('[data-a=s]').onclick=()=>salin(b[1]+', '+b[2]);e.querySelector('[data-a=d]').onclick=()=>bgSheet(d,b);return e}
+function drawBgn(el,d){
+  el.innerHTML=d.bangunan.map((b,i)=>{const l=lapTerakhir(d,b[0]);return `<button class="row" data-i="${i}"><b>${esc(b[0]||'Bangunan '+(i+1))}</b><em>›</em><span>${b[1]}, ${b[2]}</span><span style="text-align:right;color:${l?KW[l.kondisi]:'var(--mu)'}">${l?esc(KN[l.kondisi]||l.kondisi):''}</span></button>`}).join('');
+  el.querySelectorAll('.row').forEach(r=>r.onclick=()=>bgSheet(d,d.bangunan[r.dataset.i]))}
+async function bgSheet(d,b){
+  const o=document.createElement('div');o.className='lb';let oleh='';try{oleh=localStorage.getItem('oleh')||''}catch(e){}
+  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">DI ${esc(d.nama)} · ${b[1]}, ${b[2]}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button></div><div id="bx"></div></div>`;
+  document.body.appendChild(o);const x=()=>o.remove();o.onclick=e=>{if(e.target===o)x()};
+  o.querySelector('#sx').onclick=x;o.querySelector('#s1').onclick=()=>salin(b[1]+', '+b[2]);
+  o.querySelector('#s2').onclick=()=>{x();map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})};
+  const box=o.querySelector('#bx'),g=i=>box.querySelector(i);let pos=null;
+  const isi=async msg=>{
+    const [fl,lap]=await Promise.all([muatFoto(d),muatLap(d)]),L=lap.filter(r=>r.bangunan===b[0]).slice(0,6),F=fl.all.filter(f=>f.bangunan===b[0]);
+    let h='<h2>Kondisi</h2>'+(L.length?L.map(r=>`<p class="note" style="margin:4px 0"><b style="color:${KW[r.kondisi]}">${esc(KN[r.kondisi]||r.kondisi)}</b> · ${new Date(r.dibuat).toLocaleDateString('id-ID')}${r.oleh?' · '+esc(r.oleh):''}${r.catatan?'<br>'+esc(r.catatan):''}</p>`).join(''):'<p class="note">Belum ada laporan kondisi.</p>');
+    h+='<h2>Foto</h2>'+(F.length?'<div class="gal">'+F.map((f,i)=>`<img loading="lazy" src="${ft(f)}" data-i="${i}" alt="foto">`).join('')+'</div>':'<p class="note">Belum ada foto yang tertaut ke bangunan ini.</p>');
+    if(fotoOn())h+=`<div class="fm" style="margin-top:14px"><h2 style="margin:0">Laporkan kondisi</h2><label>Kondisi<select id="kk">${KL.map(k=>`<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label><label>Catatan<input type="text" id="kc" placeholder="Misalnya: pintu macet, saluran tersumbat"></label><label>Nama pelapor<input type="text" id="ko" value="${esc(oleh)}"></label><label>Foto (boleh lebih dari satu)<input type="file" id="kf" accept="image/*" multiple style="color:var(--mu)"></label><div class="act"><button class="btn" id="kg">Pakai lokasi saya</button><button class="btn p" id="kl">Kirim laporan</button></div><p class="note" id="kt"></p></div>`;
+    box.innerHTML=h;box.querySelectorAll('.gal').forEach(q=>q.onclick=e=>{const i=e.target.dataset.i;if(i!=null)lb(F[i],d)});
+    if(!fotoOn())return;if(msg)g('#kt').textContent=msg;
+    g('#kg').onclick=()=>{const t=g('#kt');if(!navigator.geolocation){t.textContent='Peramban ini tidak mendukung lokasi.';return}t.textContent='Mencari lokasi…';
+      navigator.geolocation.getCurrentPosition(p=>{pos={lat:p.coords.latitude,lon:p.coords.longitude,akurasi:p.coords.accuracy};const j=Math.round(jarak(pos.lat,pos.lon,b[1],b[2]));t.textContent='Lokasi didapat (±'+Math.round(pos.akurasi)+' m). Jarak ke bangunan sekitar '+j+' m.'+(j>300?' Anda cukup jauh dari bangunan ini, pastikan bangunan yang dipilih sudah benar.':'')},()=>{t.textContent='Lokasi tidak bisa diambil. Izinkan akses lokasi lalu coba lagi.'},{enableHighAccuracy:true,timeout:15000,maximumAge:0})};
+    g('#kl').onclick=async()=>{
+      const t=g('#kt'),ol=g('#ko').value.trim(),fs=[...g('#kf').files];try{localStorage.setItem('oleh',ol)}catch(e){}t.textContent='Mengirim…';
+      const lp={id:Date.now()+Math.random(),tipe:'laporan',nama:d.nama,bangunan:b[0],kondisi:g('#kk').value,catatan:g('#kc').value.trim()||null,oleh:ol||null,lat:pos?pos.lat:null,lon:pos?pos.lon:null,akurasi:pos?pos.akurasi:null};let an=0;
+      try{await kirimLap(lp)}catch(e){try{await qop('readwrite',s=>s.put(lp));an++}catch(e2){}}
+      for(const [i,f] of fs.entries()){t.textContent='Memproses foto '+(i+1)+' dari '+fs.length+'…';
+        const base=slug(d.nama)+'/laporan-lapangan/'+Date.now().toString(36)+i,it={id:Date.now()+i+Math.random(),nama:d.nama,folder:'Laporan lapangan',nomor:b[0],bangunan:b[0],oleh:ol,diambil:new Date(f.lastModified).toISOString(),path:base+'.jpg',tpath:base+'_t.jpg'};
+        try{it.full=await kecil(f,1280,.75);it.thumb=await kecil(f,360,.7)}catch(e){continue}
+        try{await kirim(it)}catch(e){try{await qop('readwrite',s=>s.put(it));an++}catch(e2){}}}
+      warnai();if(st.tab=='bgn'&&st.d===d)drawBgn($('#tb'),d);await isi(an?'Tersimpan di HP, menunggu sinyal. Ketuk Sinkron di tab Foto nanti.':'Laporan terkirim.')};
+  };
+  isi();
+}
+async function fto(el,msg){
+  const d=st.d;el.innerHTML='<p class="note">Memuat foto…</p>';
+  const R=await muatFoto(d);if(st.tab!='fto'||st.d!==d)return;
+  const L=R.all,on=fotoOn(),q=on?(await qall()).filter(x=>x.nama==d.nama):[],fl=[...new Set(L.map(f=>f.folder))];let oleh='';try{oleh=localStorage.getItem('oleh')||''}catch(e){}
+  let h='';
+  if(on)h+='<div class="fm"><label>Folder (saluran atau area)<select id="fsel">'+fl.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('')+'<option value="__baru">Folder baru…</option></select></label><input type="text" id="fnew" placeholder="Nama folder baru" hidden aria-label="Nama folder baru">'+
+  '<label>Tautkan ke bangunan (boleh kosong)<select id="fbg"><option value="">(tidak ditautkan)</option>'+d.bangunan.map(b=>`<option value="${esc(b[0])}">${esc(b[0])}</option>`).join('')+'</select></label>'+
+  `<label>Nama pengunggah<input type="text" id="fol" value="${esc(oleh)}" placeholder="Nama Anda"></label><input type="file" id="ff" accept="image/*" multiple aria-label="Pilih foto" style="color:var(--mu)"><div class="act"><button class="btn p" id="fup">Unggah</button><button class="btn" id="fsy">Sinkron${q.length?' ('+q.length+' menunggu)':''}</button></div><p class="note" id="fst">${esc(msg||(R.online?'':'Daftar foto online tidak bisa dimuat, periksa sinyal lalu ketuk Sinkron.'))}</p></div>`;
+  else h+='<p class="note">Menambah foto dan laporan dari HP butuh Supabase (lihat docs/FOTO.md). Foto yang sudah tersedia tetap tampil di bawah.</p>';
+  if(!L.length)h+='<p class="note">Belum ada foto untuk DI ini.</p>';
+  for(const f of fl){const a=L.map((x,i)=>[x,i]).filter(x=>x[0].folder==f);h+=`<h2>${esc(f)} (${a.length})</h2><div class="gal">`+a.map(([x,i])=>`<img loading="lazy" src="${ft(x)}" data-i="${i}" alt="${esc(x.nomor||'foto')}">`).join('')+'</div>'}
+  el.innerHTML=h;el.querySelectorAll('.gal').forEach(gl=>gl.onclick=e=>{const i=e.target.dataset.i;if(i!=null)lb(L[i],d)});
+  if(!on)return;
+  const fs=$('#fsel');if(!fl.length)fs.value='__baru';const sw=()=>$('#fnew').hidden=fs.value!='__baru';fs.onchange=sw;sw();
+  $('#fsy').onclick=async()=>{$('#fst').textContent='Menyinkronkan…';let ok=0;for(const it of q){try{await(it.tipe=='laporan'?kirimLap(it):kirim(it));await qop('readwrite',t=>t.delete(it.id));ok++}catch(e){break}}fto(el,ok?ok+' item dari antrean terkirim.':'Data foto diperbarui.')};
+  $('#fup').onclick=async()=>{
+    const fs2=[...$('#ff').files],s=$('#fst');if(!fs2.length){s.textContent='Pilih foto dulu.';return}
+    const folder=(fs.value=='__baru'?$('#fnew').value:fs.value).trim()||'umum',bg=$('#fbg').value,ol=$('#fol').value.trim();try{localStorage.setItem('oleh',ol)}catch(e){}
+    let ok=0,an=0;
+    for(const [i,f] of fs2.entries()){s.textContent='Memproses '+(i+1)+' dari '+fs2.length+'…';
+      const base=slug(d.nama)+'/'+slug(folder)+'/'+Date.now().toString(36)+i,it={id:Date.now()+i+Math.random(),nama:d.nama,folder,nomor:f.name.replace(/\.[^.]+$/,''),bangunan:bg,oleh:ol,diambil:new Date(f.lastModified).toISOString(),path:base+'.jpg',tpath:base+'_t.jpg'};
+      try{it.full=await kecil(f,1280,.75);it.thumb=await kecil(f,360,.7)}catch(e){continue}
+      try{await kirim(it);ok++}catch(e){try{await qop('readwrite',t=>t.put(it));an++}catch(e2){}}}
+    fto(el,ok+' foto terunggah'+(an?', '+an+' menunggu sinyal (ketuk Sinkron nanti)':'')+'.')};
+}
+function lb(f,d){
+  const bf=f.bangunan&&d.bangunan.find(b=>b[0]==f.bangunan),o=document.createElement('div');o.className='lb';
+  o.innerHTML=`<div class="lbi"><img src="${fu(f)}" alt=""><div class="note">${esc(f.folder)} · ${esc(f.nomor||'')}${f.oleh?' · '+esc(f.oleh):''}${f.diambil?' · '+new Date(f.diambil).toLocaleDateString('id-ID'):''}${f.bangunan?'<br>Bangunan: '+esc(f.bangunan):''}</div>`+
+  (f.statis?'':`<label class="lbl">Tautkan ke bangunan<select id="lbb"><option value="">(belum ditautkan)</option>${d.bangunan.map(b=>`<option value="${esc(b[0])}"${b[0]==f.bangunan?' selected':''}>${esc(b[0])}</option>`).join('')}</select></label>`)+
+  '<div class="act">'+(f.statis?'':'<button class="btn p" id="lbs">Simpan tautan</button>')+(bf?'<button class="btn" id="lbm">Lihat di peta</button>':'')+'<button class="btn" id="lbx">Tutup</button></div><p class="note" id="lbt"></p></div>';
+  document.body.appendChild(o);const x=()=>o.remove();
+  o.onclick=e=>{if(e.target===o)x()};o.querySelector('#lbx').onclick=x;
+  const m=o.querySelector('#lbm');if(m)m.onclick=()=>{x();document.querySelectorAll('.lb').forEach(z=>z.remove());map.flyTo([bf[1],bf[2]],18);scrollTo({top:0,behavior:'smooth'})};
+  const sv=o.querySelector('#lbs');if(sv)sv.onclick=async()=>{const v=o.querySelector('#lbb').value,r=await sb('/rest/v1/foto?id=eq.'+f.id,{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({bangunan:v||null})});
+    if(r.ok){f.bangunan=v||null;o.querySelector('#lbt').textContent='Tautan disimpan.'}else o.querySelector('#lbt').textContent='Gagal menyimpan ('+r.status+').'};
+}
+
 </script>
 </body>
 </html>

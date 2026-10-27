@@ -10,6 +10,9 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 - Tab **Skema**: gambar skema jaringan dari berkas DXF, bisa digeser dan diperbesar. Ketuk petak atau bangunan bagi untuk melihat data Excel, debit terukur, dan tombol "Lihat di peta".
 - Tab **Ringkasan**: baku, panjang saluran, tanaman per DI, serta menu mengubah luas baku.
 - Tab **Debit** dan **Bangunan**.
+- Tab **Foto**: galeri foto bangunan. Foto lama bisa disimpan di repositori (folder `foto/`), foto baru diunggah dari HP lewat Supabase dengan antrean tanpa sinyal dan menu **Sinkron** (lihat [docs/FOTO.md](docs/FOTO.md)).
+- Laporan kondisi bangunan dari lokasi (kondisi, catatan, foto, lokasi HP); titik di peta berubah warna sesuai kondisi terakhir.
+- Koordinat bisa disalin dan dibuka di Google Maps dari kotak koordinat peta maupun dari tiap bangunan.
 - Menu **Perbarui data tanaman**: unggah Excel laporan dengan format yang sama, hasilnya langsung tampil.
 
 ## Isi repositori
@@ -19,8 +22,9 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 | `index.html` | Seluruh aplikasi (satu berkas) |
 | `data.json` | Data DI: peta, tanaman, debit, per petak |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Berkas PWA (bisa dipasang seperti aplikasi dan dibuka tanpa sinyal) |
+| `config.js` | Alamat dan kunci Supabase untuk foto (isi sesuai docs/FOTO.md) |
 | `skema/*.json` | Skema jaringan per DI (nama berkas = nomor DI di `data.json`) |
-| `tools/` | Skrip Python untuk membangun ulang `data.json` dan `skema/` dari berkas sumber |
+| `tools/` | Skrip Python: membangun ulang `data.json` dan `skema/`, dan `siapkan_foto_repo.py` (foto ke folder `foto/`) dan `unggah_foto.py` (foto massal ke Supabase) |
 | `docs/` | Panduan pengaturan GitHub |
 
 ## Dijadikan aplikasi (PWA)
@@ -60,10 +64,9 @@ Sheet dikenali dari awal namanya: `5 - ...` (per saluran), `5a - ...` (per petak
 
 - Data tanaman dan debit yang tampil adalah periode yang tertulis di bagian atas aplikasi.
 - Bila luas baku di Excel dan poligon peta berbeda lebih dari 15%, aplikasi memakai yang terbesar dan menampilkan catatan. Luas baku bisa diubah dari tab Ringkasan.
-- Foto bangunan dan sinkronisasi antarperangkat belum ada. Rencananya memakai penyimpanan online bersama.
+- Menambah foto dan laporan dari HP baru aktif setelah `config.js` diisi (Supabase). Foto arsip di folder `foto/` tampil tanpa Supabase.
 
 ## Rencana berikutnya
 
-- Foto bangunan (unggah dari HP, terhubung ke kode bangunan) dengan menu sinkron.
 - Skema Konstruksi (daftar bangunan per km) dari DXF.
 - Hubungan petak ke titik bangunan di peta yang lebih lengkap.
