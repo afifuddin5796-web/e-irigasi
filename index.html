@@ -66,6 +66,7 @@ input[type=number]{background:var(--s1);border:1px solid var(--ln);border-radius
 input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
 .skw{border:1px solid var(--ln);border-radius:14px;background:#0a1120;overflow:hidden}
 .skw svg{display:block;width:100%;height:64vh;touch-action:none;user-select:none}
+.osmd{filter:invert(1) hue-rotate(180deg) brightness(.95) contrast(.9)}
 .imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
 </style>
 </head>
@@ -107,9 +108,10 @@ function detail(){
   drawMap();tab();
 }
 function drawMap(){
-  const d=st.d,sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'}),
-  dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'CARTO · OSM'});
-  map=L.map('map',{layers:[sat]});L.control.layers({'Satelit':sat,'Peta gelap':dark},null,{collapsed:true}).addTo(map);
+  const d=st.d,sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:17,attribution:'Esri'}),
+  dark=L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:16,attribution:'Esri'}),L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:16})]),
+  osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:21,maxNativeZoom:19,className:'osmd',attribution:'© OpenStreetMap'});
+  map=L.map('map',{layers:[sat],maxZoom:21});L.control.layers({'Satelit':sat,'Peta gelap':dark,'Peta jalan (gelap)':osm},null,{collapsed:true}).addTo(map);
   const g=L.featureGroup().addTo(map);
   d.areal.forEach(a=>L.polygon(a[2],{color:'#fbbf24',weight:2,fillOpacity:.3}).bindPopup(`<b>${esc(a[0]||'Petak')}</b><br>${n1(a[1],2)} ha`).addTo(g));
   d.saluran.forEach(s=>L.polyline(s[2],{color:'#22d3ee',weight:3.5}).bindPopup(`<b>${esc(s[0]||'Saluran')}</b><br>${n1(s[1],0)} m`).addTo(g));
