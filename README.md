@@ -1,6 +1,6 @@
-# Irigasi Purwosari
+# e-Irigasi
 
-Aplikasi web peta dan skema jaringan irigasi untuk para juru pengairan UPTD Purwosari, Kabupaten Pasuruan.
+e-Irigasi adalah aplikasi web peta dan skema jaringan irigasi untuk para juru pengairan UPTD Purwosari, Kabupaten Pasuruan.
 Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (padi, tebu, palawija, bero, habis panen) per daerah irigasi. Tema gelap, ringan, dan nyaman dibuka di HP.
 
 ## Fitur
@@ -18,9 +18,14 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 |---|---|
 | `index.html` | Seluruh aplikasi (satu berkas) |
 | `data.json` | Data DI: peta, tanaman, debit, per petak |
+| `manifest.webmanifest`, `sw.js`, `icons/` | Berkas PWA (bisa dipasang seperti aplikasi dan dibuka tanpa sinyal) |
 | `skema/*.json` | Skema jaringan per DI (nama berkas = nomor DI di `data.json`) |
 | `tools/` | Skrip Python untuk membangun ulang `data.json` dan `skema/` dari berkas sumber |
 | `docs/` | Panduan pengaturan GitHub |
+
+## Dijadikan aplikasi (PWA)
+
+Setelah situs aktif di GitHub Pages, aplikasi bisa dipasang dari Chrome lewat **Tambahkan ke layar utama**, atau dibungkus menjadi aplikasi Android lewat pwabuilder.com. Langkahnya ada di [docs/PWABUILDER.md](docs/PWABUILDER.md). Setiap kali `index.html` diganti, naikkan angka `VERSI` di `sw.js` supaya perangkat mengambil versi terbaru.
 
 ## Memasang (GitHub Pages)
 
