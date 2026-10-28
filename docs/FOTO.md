@@ -26,7 +26,7 @@ python tools/siapkan_foto_repo.py "D:/DATA/MOHAMAD- AFIFUDDIN/irigasi apk/foto"
 - Pemeriksaan memberi **perkiraan ukuran**. Bila melebihi sekitar 900 MB, perkecil dengan `--sisi 800 --kualitas 65`, atau pakai Supabase untuk sebagian foto.
 - Folder yang tidak cocok dengan nama DI ditampilkan di akhir. Buat `alias.json` berisi `{"nama folder": "nama DI di data.json"}` lalu tambahkan `--alias alias.json`.
 - Skrip aman dijalankan ulang: foto yang sudah ada dilewati.
-- Foto otomatis tertaut ke bangunan hanya bila nomor atau nama berkas cocok dengan **tepat satu** bangunan di peta. Sisanya tetap tampil di galeri.
+- Penautan otomatis ke bangunan memakai dua aturan. (1) Nama berkas dicocokkan dengan nama bangunan: `1 bd kecambah.jpg` tertaut ke `1 Bd Kecambah`, `1 Bd Sembojo.jpg` ke `0 Bd Sembojo`. (2) Berkas bernomor (`3.jpg`) dicocokkan dengan nomor bangunan. Bila ada beberapa bangunan bernomor sama, dipilih yang paling dekat dengan petak atau saluran yang namanya sama dengan folder (misalnya folder `Banyak Putih`). Bila tetap tidak yakin, foto dibiarkan tanpa tautan. Hasil otomatis ini tebakan terbaik: koreksi dengan mengetuk foto di aplikasi lalu memilih bangunan yang benar.
 - Unggah folder `foto/` ke GitHub memakai **GitHub Desktop** (berkasnya ribuan, sedangkan unggahan lewat browser dibatasi sekitar 100 berkas). Foto dari repositori tidak bisa diubah tautannya dari aplikasi.
 
 ## B. Foto baru, laporan kondisi, dan sinkron (Supabase)
@@ -48,6 +48,10 @@ Bila Anda lebih suka menaruh semua foto lama di Supabase, `python tools/unggah_f
 4. Ketuk **Kirim laporan**.
 
 Titik bangunan di peta berubah warna sesuai laporan terakhir (biru baik, kuning rusak ringan, oranye rusak sedang, merah rusak berat). Di rincian bangunan tampil enam laporan terakhir dan foto yang tertaut. Laporan yang dikirim tanpa sinyal tersimpan di HP dan terkirim lewat **Sinkron** di tab Foto.
+
+## Tanda bangunan di peta
+
+Saat sebuah bangunan dipilih (di formulir foto, di daftar bangunan, atau lewat tombol **Lihat di peta**), peta bergerak ke bangunan itu dan menandainya dengan lingkaran merah berdenyut. Label merah di atas peta menampilkan namanya, dan tombol **Hapus tanda** menghilangkannya.
 
 ## D. Koordinat dan Google Maps
 

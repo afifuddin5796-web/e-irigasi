@@ -78,6 +78,16 @@ input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
 a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--cy);color:#04141a;font-weight:600;border-radius:10px;padding:10px 16px;z-index:3000;opacity:0;pointer-events:none;transition:opacity .2s}
 #toast.on{opacity:1}
+.pil{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:500;display:flex;align-items:center;gap:8px;background:#ff2d55;color:#fff;font-weight:600;font-size:12px;border-radius:999px;padding:5px 6px 5px 12px;max-width:62%}
+.pil[hidden]{display:none}
+.pil span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pil .cb{background:#0a1120;margin:0;white-space:nowrap}
+.sr{position:relative;width:44px;height:44px}
+.sr::before,.sr::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid #ff2d55;animation:dn 1.4s ease-out infinite}
+.sr::after{animation-delay:.7s}
+.sr i{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#ff2d55;border:2px solid #fff;box-shadow:0 0 14px 6px #ff2d55}
+@keyframes dn{from{transform:scale(.3);opacity:1}to{transform:scale(1.6);opacity:0}}
+@media(prefers-reduced-motion:reduce){.sr::before,.sr::after{animation:none}}
 .imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
 </style>
 </head>
@@ -113,7 +123,7 @@ function list(){
 function detail(){
   const d=st.d,t=d.tanam;
   $('#ttl').innerHTML='DI '+esc(d.nama)+'<small>Juru '+esc(d.juru)+' · peta '+d.tahun+'</small>';
-  app.innerHTML='<div id="map"><div class="coord"><span id="co">Geser peta untuk melihat koordinat</span><button class="cb" id="cps" type="button">Salin</button><a class="cb" id="cmp" target="_blank" rel="noopener">Maps</a></div></div>'+
+  app.innerHTML='<div id="map"><div class="coord"><span id="co">Geser peta untuk melihat koordinat</span><button class="cb" id="cps" type="button">Salin</button><a class="cb" id="cmp" target="_blank" rel="noopener">Maps</a></div><div class="pil" id="pil" hidden><span id="pilt"></span><button class="cb" id="pilx" type="button">Hapus tanda</button></div></div>'+
   '<div class="leg"><span><i style="background:var(--am)"></i>Baku sawah</span><span><i style="background:var(--cy)"></i>Saluran</span><span><i style="background:var(--lm);border-radius:50%"></i>Bangunan</span></div>'+
   '<div class="leg" id="lgk" hidden>'+KL.map(k=>`<span><i style="background:${k[2]};border-radius:50%"></i>${k[1]}</span>`).join('')+'</div><div class="tabs" role="tablist">'+[['ring','Ringkasan'],['skm','Skema'],['deb','Debit'],['bgn','Bangunan'],['fto','Foto']].map(x=>`<button role="tab" data-t="${x[0]}" aria-selected="${st.tab==x[0]}">${x[1]}</button>`).join('')+'</div><div id="tb"></div>';
   app.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.tab=b.dataset.t;app.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x==b));tab()});
@@ -132,7 +142,7 @@ function drawMap(){
   const co=$('#co'),show=p=>{co.textContent=p.lat.toFixed(5)+', '+p.lng.toFixed(5);$('#cmp').href=mapsUrl(p.lat,p.lng)};
   map.on('mousemove',e=>show(e.latlng));map.on('moveend',()=>show(map.getCenter()));
   map.on('click',e=>show(e.latlng));map._g=g;
-  L.DomEvent.disableClickPropagation(co.parentNode);$('#cps').onclick=()=>{const t=co.textContent;if(/^-?\d/.test(t))salin(t)};if(fotoOn())muatLap(d).then(warnai);
+  L.DomEvent.disableClickPropagation(co.parentNode);L.DomEvent.disableClickPropagation($('#pil'));$('#pilx').onclick=()=>sorot(null);$('#cps').onclick=()=>{const t=co.textContent;if(/^-?\d/.test(t))salin(t)};if(fotoOn())muatLap(d).then(warnai);
 }
 function tab(){
   const d=st.d,t=d.tanam,el=$('#tb');
@@ -228,7 +238,7 @@ function skInfo(S,i,tm,dm){
   if(db)h+=`<p class="note">Debit terukur (${esc(db.n)}): <b>${n1(db.q)} lt/dt</b>, tinggi air ${n1(db.h)} cm.</p>`;
   if(!tr&&!db)h+='<p class="note">Belum ada data Excel yang cocok dengan label ini.</p>';
   p.innerHTML=h+(b?'<div class="act"><button class="btn p" id="gm">Lihat di peta</button></div>':'');
-  if(b)$('#gm').onclick=()=>{map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})};
+  if(b)$('#gm').onclick=()=>{sorot(b[0]);scrollTo({top:0,behavior:'smooth'})};
 }
 function panzoom(svg,S){
   let vb=[0,0,S.w,S.h],pts=new Map(),pd=0,mv=0;const set=()=>svg.setAttribute('viewBox',vb.join(' ')),
@@ -277,6 +287,14 @@ async function muatLap(d){if(!fotoOn())return[];try{const r=await sb('/rest/v1/l
 async function muatStatis(d){if(FS[d.nama])return FS[d.nama];let a=[];try{const r=await fetch('foto/'+slug(d.nama)+'.json');if(r.ok)a=(await r.json()).map(x=>({...x,statis:true}))}catch(e){}return FS[d.nama]=a}
 async function muatFoto(d){const S=await muatStatis(d);let L=[],online=false;if(fotoOn()){try{const r=await sb('/rest/v1/foto?di_nama=eq.'+encodeURIComponent(d.nama)+'&select=*&order=folder,nomor&limit=2000');if(r.ok){L=await r.json();online=true}}catch(e){}}return{all:S.concat(L),online}}
 /*E3*/
+function sorot(name){
+  if(!map)return;if(map._sr){map._sr.remove();map._sr=null}
+  const b=name&&st.d.bangunan.find(x=>x[0]==name),p=$('#pil');
+  if(!b){if(p)p.hidden=true;return}
+  map._sr=L.marker([b[1],b[2]],{icon:L.divIcon({className:'',html:'<div class="sr"><i></i></div>',iconSize:[44,44],iconAnchor:[22,22]}),interactive:false,zIndexOffset:1000}).addTo(map);
+  map.flyTo([b[1],b[2]],Math.max(map.getZoom(),17));
+  if(p){$('#pilt').textContent='Ditandai: '+name;p.hidden=false}
+}
 function warnai(){if(!map||!map._mk)return;const d=st.d;for(const b of d.bangunan){const m=map._mk[b[0]],l=lapTerakhir(d,b[0]);if(m&&l&&KW[l.kondisi])m.setStyle({fillColor:KW[l.kondisi]})}const g=$('#lgk');if(g&&(LP[d.nama]||[]).length)g.hidden=false}
 function popB(d,b){
   const e=document.createElement('div'),l=lapTerakhir(d,b[0]);
@@ -288,9 +306,9 @@ function drawBgn(el,d){
 async function bgSheet(d,b){
   const o=document.createElement('div');o.className='lb';let oleh='';try{oleh=localStorage.getItem('oleh')||''}catch(e){}
   o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">DI ${esc(d.nama)} · ${b[1]}, ${b[2]}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button></div><div id="bx"></div></div>`;
-  document.body.appendChild(o);const x=()=>o.remove();o.onclick=e=>{if(e.target===o)x()};
+  document.body.appendChild(o);const x=()=>o.remove();o.onclick=e=>{if(e.target===o)x()};sorot(b[0]);
   o.querySelector('#sx').onclick=x;o.querySelector('#s1').onclick=()=>salin(b[1]+', '+b[2]);
-  o.querySelector('#s2').onclick=()=>{x();map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})};
+  o.querySelector('#s2').onclick=()=>{x();sorot(b[0]);scrollTo({top:0,behavior:'smooth'})};
   const box=o.querySelector('#bx'),g=i=>box.querySelector(i);let pos=null;
   const isi=async msg=>{
     const [fl,lap]=await Promise.all([muatFoto(d),muatLap(d)]),L=lap.filter(r=>r.bangunan===b[0]).slice(0,6),F=fl.all.filter(f=>f.bangunan===b[0]);
@@ -326,7 +344,7 @@ async function fto(el,msg){
   for(const f of fl){const a=L.map((x,i)=>[x,i]).filter(x=>x[0].folder==f);h+=`<h2>${esc(f)} (${a.length})</h2><div class="gal">`+a.map(([x,i])=>`<img loading="lazy" src="${ft(x)}" data-i="${i}" alt="${esc(x.nomor||'foto')}">`).join('')+'</div>'}
   el.innerHTML=h;el.querySelectorAll('.gal').forEach(gl=>gl.onclick=e=>{const i=e.target.dataset.i;if(i!=null)lb(L[i],d)});
   if(!on)return;
-  const fs=$('#fsel');if(!fl.length)fs.value='__baru';const sw=()=>$('#fnew').hidden=fs.value!='__baru';fs.onchange=sw;sw();
+  const fs=$('#fsel');if(!fl.length)fs.value='__baru';const sw=()=>$('#fnew').hidden=fs.value!='__baru';fs.onchange=sw;sw();$('#fbg').onchange=e=>{sorot(e.target.value);if(e.target.value)toast('Ditandai di peta: '+e.target.value)};
   $('#fsy').onclick=async()=>{$('#fst').textContent='Menyinkronkan…';let ok=0;for(const it of q){try{await(it.tipe=='laporan'?kirimLap(it):kirim(it));await qop('readwrite',t=>t.delete(it.id));ok++}catch(e){break}}fto(el,ok?ok+' item dari antrean terkirim.':'Data foto diperbarui.')};
   $('#fup').onclick=async()=>{
     const fs2=[...$('#ff').files],s=$('#fst');if(!fs2.length){s.textContent='Pilih foto dulu.';return}
@@ -345,7 +363,7 @@ function lb(f,d){
   '<div class="act">'+(f.statis?'':'<button class="btn p" id="lbs">Simpan tautan</button>')+(bf?'<button class="btn" id="lbm">Lihat di peta</button>':'')+'<button class="btn" id="lbx">Tutup</button></div><p class="note" id="lbt"></p></div>';
   document.body.appendChild(o);const x=()=>o.remove();
   o.onclick=e=>{if(e.target===o)x()};o.querySelector('#lbx').onclick=x;
-  const m=o.querySelector('#lbm');if(m)m.onclick=()=>{x();document.querySelectorAll('.lb').forEach(z=>z.remove());map.flyTo([bf[1],bf[2]],18);scrollTo({top:0,behavior:'smooth'})};
+  const m=o.querySelector('#lbm');if(m)m.onclick=()=>{x();document.querySelectorAll('.lb').forEach(z=>z.remove());sorot(bf[0]);scrollTo({top:0,behavior:'smooth'})};
   const sv=o.querySelector('#lbs');if(sv)sv.onclick=async()=>{const v=o.querySelector('#lbb').value,r=await sb('/rest/v1/foto?id=eq.'+f.id,{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({bangunan:v||null})});
     if(r.ok){f.bangunan=v||null;o.querySelector('#lbt').textContent='Tautan disimpan.'}else o.querySelector('#lbt').textContent='Gagal menyimpan ('+r.status+').'};
 }
