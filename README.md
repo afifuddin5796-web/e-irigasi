@@ -5,6 +5,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 
 ## Fitur
 
+- Setelah memilih juru, aset irigasi di wilayahnya dikelompokkan otomatis dari nama bangunan di peta (sumber air, bendung, bangunan bagi dan sadap, pelimpah, gorong-gorong, boks tersier, ujung saluran, dan lainnya), dan setiap aset bisa dibuka langsung di peta. Tab **Daerah irigasi** menampilkan daftar DI.
 - Pilih juru pengairan (Krangkong, Sadan, Sengon, Purwodadi, Rejoso, Sukorejo, Sukun), lalu daerah irigasi di bawahnya.
 - Peta satelit atau peta gelap dengan koordinat, saluran, petak baku, dan bangunan (dari berkas KMZ).
 - Tab **Skema**: gambar skema jaringan dari berkas DXF, bisa digeser dan diperbesar. Ketuk petak atau bangunan bagi untuk melihat data Excel, debit terukur, dan tombol "Lihat di peta".
@@ -12,6 +13,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 - Tab **Debit** dan **Bangunan**.
 - Tab **Foto**: galeri foto bangunan. Foto lama bisa disimpan di repositori (folder `foto/`), foto baru diunggah dari HP lewat Supabase dengan antrean tanpa sinyal dan menu **Sinkron** (lihat [docs/FOTO.md](docs/FOTO.md)).
 - Laporan kondisi bangunan dari lokasi (kondisi, catatan, foto, lokasi HP); titik di peta berubah warna sesuai kondisi terakhir.
+- Pembaruan sederhana dari aplikasi: ubah luas baku, ganti peta DI dari berkas KMZ, unggah Excel tanaman, lalu unduh `data.json` dan unggah ke GitHub (lihat [docs/PEMBARUAN.md](docs/PEMBARUAN.md)). Menu ini hanya tampil di mode pengelola (ketuk judul aplikasi 5 kali). Juru hanya melihat peta, skema, debit, dan menambah foto ([docs/PANDUAN_JURU.md](docs/PANDUAN_JURU.md)).
 - Koordinat bisa disalin dan dibuka di Google Maps dari kotak koordinat peta maupun dari tiap bangunan.
 - Menu **Perbarui data tanaman**: unggah Excel laporan dengan format yang sama, hasilnya langsung tampil.
 

@@ -92,33 +92,59 @@ a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 </style>
 </head>
 <body>
-<header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">e-Irigasi</h1></header>
+<header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">e-Irigasi</h1><span class="cb" id="adm" hidden>Pengelola</span></header>
 <main id="app"><p class="lead">Memuat data…</p></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,MSG='';
+let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},ADM=false,MSG='';
 const $=s=>document.querySelector(s),app=$('#app'),n1=(x,d=1)=>(+x||0).toLocaleString('id-ID',{maximumFractionDigits:d}),
 esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const baku=d=>{if(OV[d.nama]!=null)return OV[d.nama];if(d.bakuEdit!=null)return d.bakuEdit;const x=d.tanam&&d.tanam.baku;if(!x)return d.bakuKmz;return Math.abs(x-d.bakuKmz)/x>.15?Math.max(x,d.bakuKmz):x};
-try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null')}catch(e){}
-fetch('data.json').then(r=>r.json()).then(j=>{DB=j;applyUp();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
-$('#back').onclick=()=>{if(st.d){st.d=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
-function route(){if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
+try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');ADM=localStorage.getItem('adm')==='1'}catch(e){}
+fetch('data.json').then(r=>r.json()).then(j=>{DB=j;limpas();applyUp();applyKz();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
+$('#back').onclick=()=>{if(st.d){st.d=null}else if(st.k){st.k=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
+function route(){$('#adm').hidden=!ADM;if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
 function home(){
   $('#ttl').innerHTML='e-Irigasi<small>UPTD Purwosari · Periode '+esc(DB.periode)+'</small>';
   app.innerHTML='<p class="lead">Pilih juru pengairan untuk melihat daerah irigasi yang menjadi tanggung jawab Anda.</p><div class="juru">'+
   DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
-  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});xl();
+  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});if(ADM)xl();
 }
 function list(){
-  $('#ttl').innerHTML='Juru '+esc(st.j)+'<small>Pilih daerah irigasi</small>';
-  const a=DB.di.filter(d=>d.juru===st.j);
-  app.innerHTML='<input type="search" id="q" placeholder="Cari daerah irigasi" aria-label="Cari daerah irigasi"><div id="ls"></div>';
+  const a=DB.di.filter(d=>d.juru===st.j);st.v=st.v||'aset';
+  $('#ttl').innerHTML='Juru '+esc(st.j)+'<small>'+(st.k?esc(KATN[st.k]):st.v=='aset'?'Aset irigasi':'Pilih daerah irigasi')+'</small>';
+  const tabs=st.k?'':'<div class="tabs" role="tablist" style="margin-top:0">'+[['aset','Aset irigasi'],['di','Daerah irigasi']].map(x=>`<button role="tab" data-v="${x[0]}" aria-selected="${st.v==x[0]}">${x[1]}</button>`).join('')+'</div>';
+  app.innerHTML=tabs+'<div id="lv"></div>';
+  app.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.v=b.dataset.v;route()});
+  st.v=='di'?listDI(a):listAset(a);
+}
+function listDI(a){
+  $('#lv').innerHTML='<input type="search" id="q" placeholder="Cari daerah irigasi" aria-label="Cari daerah irigasi"><div id="ls"></div>';
   const draw=()=>{const q=$('#q').value.toLowerCase();$('#ls').innerHTML=a.filter(d=>d.nama.toLowerCase().includes(q)).map(d=>`<button class="row" data-i="${d.id}"><b>DI ${esc(d.nama)}</b><em>${n1(baku(d),0)} ha</em><span>${n1(d.panjangKm,2)} km saluran · ${d.bangunan.length} bangunan</span><span style="text-align:right">peta ${d.tahun}</span></button>`).join('')||'<p class="lead">Tidak ada yang cocok.</p>';
     $('#ls').querySelectorAll('.row').forEach(b=>b.onclick=()=>{st.d=DB.di.find(d=>d.id==b.dataset.i);st.tab='ring';route()})};
   $('#q').oninput=draw;draw();
+}
+function listAset(a){
+  const lv=$('#lv'),A=[];a.forEach(d=>d.bangunan.forEach((b,i)=>A.push({d,i,b,k:kat(b[0])})));
+  if(!st.k){
+    const c={},dd={};A.forEach(x=>{c[x.k]=(c[x.k]||0)+1;(dd[x.k]=dd[x.k]||new Set()).add(x.d.id)});
+    lv.innerHTML='<div class="cards"><div class="card"><span>Daerah irigasi</span><b>'+a.length+'</b></div><div class="card"><span>Total aset</span><b>'+A.length+'</b></div><div class="card"><span>Baku sawah</span><b>'+n1(a.reduce((s,d)=>s+baku(d),0),0)+' <small>ha</small></b></div></div><h2>Kelompok aset</h2><div class="juru">'+
+      KAT.filter(k=>c[k[0]]).map(k=>`<button class="jb" data-k="${k[0]}" style="border-left:4px solid ${KC[k[0]]}"><b>${k[1]}</b><span>${c[k[0]]} aset · ${dd[k[0]].size} DI</span></button>`).join('')+'</div>';
+    lv.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.k=b.dataset.k;route()});return}
+  lv.innerHTML='<input type="search" id="q" placeholder="Cari nama aset atau daerah irigasi" aria-label="Cari aset"><div id="ls"></div>';
+  let lim=300;
+  const draw=()=>{
+    const q=$('#q').value.toLowerCase(),L=A.filter(x=>x.k==st.k&&((x.b[0]||'').toLowerCase().includes(q)||x.d.nama.toLowerCase().includes(q))).sort((p,r)=>p.d.nama.localeCompare(r.d.nama)||(p.b[0]||'').localeCompare(r.b[0]||'',undefined,{numeric:true}));
+    let h='<p class="note">'+L.length+' aset</p>',last='';
+    L.slice(0,lim).forEach(x=>{if(x.d.nama!==last){h+='<h2>DI '+esc(x.d.nama)+'</h2>';last=x.d.nama}h+=`<button class="row" data-d="${x.d.id}" data-i="${x.i}"><b>${esc(x.b[0]||'(tanpa nama)')}</b><em>›</em><span>${x.b[1]}, ${x.b[2]}</span><span></span></button>`});
+    if(L.length>lim)h+='<div class="act"><button class="btn" id="mr">Tampilkan lebih banyak</button></div>';
+    $('#ls').innerHTML=h;
+    $('#ls').querySelectorAll('.row').forEach(r=>r.onclick=()=>{const d=DB.di.find(z=>z.id==r.dataset.d),b=d.bangunan[r.dataset.i];st.d=d;st.tab='bgn';route();bgSheet(d,b)});
+    const m=$('#mr');if(m)m.onclick=()=>{lim+=300;draw()}};
+  $('#q').oninput=()=>{lim=300;draw()};draw();
 }
 function detail(){
   const d=st.d,t=d.tanam;
@@ -154,10 +180,10 @@ function tab(){
     drawBgn(el,d);if(fotoOn())muatLap(d).then(()=>{if(st.tab=='bgn'&&st.d===d)drawBgn(el,d)});
   }else{
     const bk=baku(d),rows=t?[['Padi',t.padi,'#a3e635'],['Tebu',t.tebu,'#22d3ee'],['Palawija',t.palawija,'#fbbf24'],['Bero',t.bero,'#fb7185'],['Habis panen',t.panen,'#c4b5fd']]:[];
-    el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div>'+edform(d,bk)+
+    el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div>'+(ADM?edform(d,bk)+kmzform(d):'')+
     (t?'<h2>Tanaman periode '+esc(DB.periode)+'</h2>'+rows.map(r=>`<div class="bar"><span>${r[0]}</span><div><i style="width:${Math.min(100,bk?r[1]/bk*100:0)}%;background:${r[2]}"></i></div><b>${n1(r[1])} ha</b></div>`).join('')+(t.persiapan?`<p class="note">Persiapan padi (pembibitan dan garap tanah): ${n1(t.persiapan)} ha.</p>`:''):'<p class="note">Data tanaman untuk DI ini belum terbaca dari Excel.</p>')+
-    (t&&Math.abs(t.baku-d.bakuKmz)/Math.max(t.baku,1)>.15?`<p class="note">Luas baku Excel ${n1(t.baku,0)} ha dan poligon peta ${n1(d.bakuKmz,0)} ha berbeda jauh. Yang dipakai adalah nilai terbesar, kecuali sudah diubah.</p>`:'');
-    edbind(d);
+    (ADM&&t&&Math.abs(t.baku-d.bakuKmz)/Math.max(t.baku,1)>.15?`<p class="note">Luas baku Excel ${n1(t.baku,0)} ha dan poligon peta ${n1(d.bakuKmz,0)} ha berbeda jauh. Yang dipakai adalah nilai terbesar, kecuali sudah diubah.</p>`:'');
+    if(ADM){edbind(d);kmzbind(d)}
   }
 }
 /*P*/
@@ -171,18 +197,18 @@ tersOf=(T,ks)=>{for(const k of ks){const t=T[k];if(!t)continue;const r=t.ch.filt
 deb=rows=>{const D={},ex=['JURU PENGAIRAN','UPTD','PURWOSARI'];let cd=null,nm=null,ty,le,ko;rows.forEach((r,i)=>{const c=r[1]?String(r[1]):'';if(c&&c===c.toUpperCase()&&/[A-Z]/.test(c)&&!ex.includes(c))cd=norm(c);if(r[2]&&String(r[2]).trim()){nm=String(r[2]).trim();ty=r[4];le=r[5];ko=r[6]}
  if(r[8]=='Q->'&&cd&&nm&&i>0&&rows[i-1][8]=='H->'){const q=r.slice(9,19).filter(x=>typeof x=='number'),h=rows[i-1].slice(9,19).filter(x=>typeof x=='number'),a=x=>x.reduce((s,y)=>s+y,0)/x.length;if(q.length&&nm!='Limpasan')(D[cd]=D[cd]||{})[nm]={n:nm,q:+a(q).toFixed(1),h:h.length?+a(h).toFixed(1):0,tipe:ty,lebar:le,kond:ko}}});return D};
 /*E*/
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));localStorage.setItem('lt',Date.now());return true}catch(e){return false}};
 const applyUp=()=>{if(!UP)return;DB.periode=UP.periode;DB.di.forEach(d=>{if(UP.t[d.nama])d.tanam=UP.t[d.nama];if(UP.q[d.nama])d.debit=UP.q[d.nama];if(UP.s&&UP.s[d.nama])d.ters=UP.s[d.nama]})};
 function edform(d,bk){return '<form class="ed" id="ed"><label>Luas baku (ha)<input type="number" step="0.1" min="0" id="bk" value="'+(+bk).toFixed(1)+'"></label><button class="btn p">Simpan</button>'+(OV[d.nama]!=null?'<button type="button" class="btn" id="rs">Kembalikan</button>':'')+'</form><p class="note">Perubahan luas baku tersimpan di perangkat ini.</p>'}
 function edbind(d){$('#ed').onsubmit=e=>{e.preventDefault();const v=parseFloat($('#bk').value);if(v>=0){OV[d.nama]=v;save('ov',OV);tab()}};const r=$('#rs');if(r)r.onclick=()=>{delete OV[d.nama];save('ov',OV);tab()}}
 function xl(){
   const h=document.createElement('section');h.className='imp';
-  h.innerHTML='<h2>Perbarui data tanaman</h2><p class="lead">Pilih file Excel laporan tanaman dan debit dengan format yang sama (sheet 5, 5a, dan 06). Hasilnya langsung tampil di perangkat ini.</p><input type="file" id="xf" accept=".xlsx,.xlsm" aria-label="File Excel"><p class="note" id="xs"></p><div class="act"><button class="btn p" id="dl">Unduh data.json untuk dibagikan</button>'+(UP?'<button class="btn" id="rx">Hapus pembaruan di perangkat ini</button>':'')+'</div><p class="note">Agar semua juru melihat data yang sama, unggah data.json hasil unduhan ke repo GitHub menggantikan yang lama.</p>';
+  h.innerHTML='<h2>Perbarui data tanaman</h2><p class="lead">Pilih file Excel laporan tanaman dan debit dengan format yang sama (sheet 5, 5a, dan 06). Hasilnya langsung tampil di perangkat ini.</p><input type="file" id="xf" accept=".xlsx,.xlsm" aria-label="File Excel"><p class="note" id="xs"></p><div class="act"><button class="btn p" id="dl">Unduh data.json untuk dibagikan</button>'+(loc()?'<button class="btn" id="rx">Hapus semua perubahan di perangkat ini</button>':'')+'</div><p class="note">Agar semua juru melihat data yang sama, unggah data.json hasil unduhan ke repo GitHub menggantikan yang lama. Luas baku dan peta KMZ yang diubah ikut terbawa di berkas itu.</p>';
   app.appendChild(h);
-  $('#xs').textContent=MSG||(UP?'Pembaruan aktif di perangkat ini, periode '+UP.periode+'.':'Periode data saat ini: '+DB.periode+'.');
-  $('#xf').onchange=imp;$('#dl').onclick=dl;const r=$('#rx');if(r)r.onclick=()=>{try{localStorage.removeItem('up')}catch(e){}location.reload()};
+  $('#xs').textContent=MSG||(loc()?'Perubahan di perangkat ini: '+loc()+'. Periode data: '+DB.periode+'.':'Periode data saat ini: '+DB.periode+'.');
+  $('#xf').onchange=imp;$('#dl').onclick=dl;const r=$('#rx');if(r)r.onclick=()=>{try{['up','ov','kz','lt'].forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()};
 }
-function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
+function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});DB.versi=Date.now();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
 async function imp(e){
   const f=e.target.files[0];if(!f)return;$('#xs').textContent='Membaca file…';
   try{
@@ -287,6 +313,56 @@ async function muatLap(d){if(!fotoOn())return[];try{const r=await sb('/rest/v1/l
 async function muatStatis(d){if(FS[d.nama])return FS[d.nama];let a=[];try{const r=await fetch('foto/'+slug(d.nama)+'.json');if(r.ok)a=(await r.json()).map(x=>({...x,statis:true}))}catch(e){}return FS[d.nama]=a}
 async function muatFoto(d){const S=await muatStatis(d);let L=[],online=false;if(fotoOn()){try{const r=await sb('/rest/v1/foto?di_nama=eq.'+encodeURIComponent(d.nama)+'&select=*&order=folder,nomor&limit=2000');if(r.ok){L=await r.json();online=true}}catch(e){}}return{all:S.concat(L),online}}
 /*E3*/
+/*K*/
+const kmlParse=t=>{
+  const un=s=>s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&').trim(),
+  co=s=>{const o=[];for(const k of s.trim().split(/\s+/)){const p=k.split(','),la=parseFloat(p[1]),lo=parseFloat(p[0]);if(p.length>=2&&isFinite(la)&&isFinite(lo))o.push([+la.toFixed(5),+lo.toFixed(5)])}return o},
+  hv=(a,b)=>{const r=x=>x*Math.PI/180,p=r(b[0]-a[0]),l=r(b[1]-a[1]),q=Math.sin(p/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(l/2)**2;return 12742000*Math.asin(Math.sqrt(q))},
+  ha=c=>{let la=0;for(const p of c)la+=p[0];la/=c.length;const kx=111320*Math.cos(la*Math.PI/180),ky=110540,xy=c.map(p=>[p[1]*kx,p[0]*ky]);let s=0;for(let i=0;i<xy.length;i++){const[x1,y1]=xy[i],[x2,y2]=xy[(i+1)%xy.length];s+=x1*y2-x2*y1}return Math.abs(s)/2/10000},
+  B=[],S=[],A=[];
+  for(const m of t.matchAll(/<Placemark[\s>][\s\S]*?<\/Placemark>/g)){
+    const pm=m[0],name=un((pm.match(/<name>([\s\S]*?)<\/name>/)||[0,''])[1]);
+    for(const g of pm.matchAll(/<Point>[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/g)){const c=co(g[1]);if(c.length)B.push([name,c[0][0],c[0][1]])}
+    for(const g of pm.matchAll(/<LineString>[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/g)){const c=co(g[1]);if(c.length>1){let L=0;for(let i=0;i<c.length-1;i++)L+=hv(c[i],c[i+1]);S.push([name,Math.round(L),c])}}
+    for(const g of pm.matchAll(/<Polygon>[\s\S]*?<outerBoundaryIs>[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/g)){const c=co(g[1]);if(c.length>2)A.push([name,+ha(c).toFixed(2),c])}
+  }
+  return{bangunan:B,saluran:S,areal:A,panjangKm:+(S.reduce((s,x)=>s+x[1],0)/1000).toFixed(2),bakuKmz:+A.reduce((s,x)=>s+x[1],0).toFixed(1)}};
+/*E4*/
+const loc=()=>{const a=[],n=Object.keys(OV).length,k=Object.keys(KO).length;if(n)a.push(n+' luas baku');if(k)a.push(k+' peta KMZ');if(UP)a.push('data tanaman '+UP.periode);return a.join(', ')};
+function limpas(){try{const lt=+(localStorage.getItem('lt')||0);if(lt&&DB.versi&&DB.versi>=lt){['ov','up','kz','lt'].forEach(k=>localStorage.removeItem(k));OV={};UP=null;KO={}}}catch(e){}}
+function applyKz(){DB.di.forEach(d=>{if(KO[d.nama])Object.assign(d,KO[d.nama])})}
+function kmzform(d){return '<div class="fm" style="margin-top:12px"><h2 style="margin:0">Ganti peta DI ini dari KMZ</h2><p class="note" style="margin:0">Pilih berkas .kmz atau .kml hasil pembaruan. Peta, bangunan, panjang saluran, dan luas poligon DI ini diganti. Data tanaman dan debit tidak berubah.</p><input type="file" id="kz" accept=".kmz,.kml" aria-label="Berkas KMZ" style="color:var(--mu)"><p class="note" id="kzs">'+(KO[d.nama]?'Peta DI ini sudah diganti di perangkat ini.':'')+'</p>'+(KO[d.nama]?'<div class="act"><button class="btn" id="kzr" type="button">Kembalikan peta asli</button></div>':'')+'</div>'}
+function kmzbind(d){
+  $('#kz').onchange=async e=>{const f=e.target.files[0];if(!f)return;const s=$('#kzs');s.textContent='Membaca…';
+    try{let t;if(/\.kmz$/i.test(f.name)){const z=await JSZip.loadAsync(await f.arrayBuffer()),n=Object.keys(z.files).find(k=>/\.kml$/i.test(k));if(!n)throw new Error('berkas .kml tidak ditemukan di dalam KMZ');t=await z.files[n].async('string')}else t=await f.text();
+      const r=kmlParse(t);if(!r.bangunan.length&&!r.saluran.length&&!r.areal.length)throw new Error('tidak ada titik, garis, atau poligon');
+      const ym=f.name.match(/(20\d\d)/);r.tahun=ym?+ym[1]:new Date().getFullYear();
+      if(!confirm('Peta baru: '+r.bangunan.length+' bangunan, '+r.saluran.length+' saluran ('+r.panjangKm+' km), '+r.areal.length+' petak ('+r.bakuKmz+' ha).\nSebelumnya: '+d.bangunan.length+' bangunan, '+d.saluran.length+' saluran ('+d.panjangKm+' km), '+d.areal.length+' petak ('+d.bakuKmz+' ha).\nGanti peta DI '+d.nama+'?')){s.textContent='Dibatalkan.';return}
+      if(!save('kz',{...KO,[d.nama]:r}))throw new Error('penyimpanan perangkat penuh');
+      KO[d.nama]=r;Object.assign(d,r);route()}catch(err){s.textContent='Gagal: '+err.message}};
+  const b=$('#kzr');if(b)b.onclick=()=>{delete KO[d.nama];save('kz',KO);location.reload()};
+}
+/*Z*/
+const KAT=[['sumber','Sumber air'],['bendung','Bendung'],['bagi','Bangunan bagi dan sadap'],['pelimpah','Pelimpah'],['gorong','Gorong-gorong'],['talang','Talang'],['terjun','Terjunan'],['suplisi','Suplisi'],['sipon','Sipon'],['bok','Boks tersier'],['ujung','Ujung saluran'],['lain','Aset lainnya']],
+KATN=Object.fromEntries(KAT),KC={sumber:'#38bdf8',bendung:'#fbbf24',bagi:'#2ee6c8',pelimpah:'#fb923c',gorong:'#c4b5fd',talang:'#f472b6',terjun:'#60a5fa',suplisi:'#a3e635',sipon:'#fda4af',bok:'#94a3b8',ujung:'#64748b',lain:'#475569'};
+function kat(n){
+  const o=String(n||'').toLowerCase(),s=o.replace(/^\s*[a-z]?\d+[a-z]?(?=\s|$|\.)\s*\.?\s*/,'').trim();
+  if(/\b(ma|mata ?air|umbul|belik|sumber|sbr|embung)\b/.test(s))return'sumber';
+  if(/\b(bd|bendung|bendungan|dam)\b/.test(s))return'bendung';
+  if(/pelimpa/.test(s))return'pelimpah';
+  if(/gorong/.test(s))return'gorong';
+  if(/talang/.test(s))return'talang';
+  if(/terjun/.test(s))return'terjun';
+  if(/suplisi/.test(s))return'suplisi';
+  if(/\b(sipon|siphon|syphon|sypon)\b/.test(s))return'sipon';
+  if(/\b(bok|boks|box)\b/.test(s))return'bok';
+  if(/ujung/.test(s))return'ujung';
+  if(/\b(bagi|sadap)\b/.test(s)||/^b{0,2}\.?\s*[a-z]{1,4}\.?\s*\d+\s*(ki|ka|tg|kn|kr)?$/.test(s)||/^\s*[a-z]?\d*\s*bu(\s|$|\d)/.test(o)||/^[a-z]?\d+[a-z]{1,4}\s*\d+/.test(o)||/^(b|bs|bbs)[\s.]/.test(s))return'bagi';
+  return'lain';
+}
+/*EZ*/
+let tp=0,tt;
+$('#ttl').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,2500);if(tp>=5){tp=0;ADM=!ADM;try{localStorage.setItem('adm',ADM?'1':'0')}catch(e){}toast(ADM?'Mode pengelola aktif':'Mode pengelola nonaktif');route()}};
 function sorot(name){
   if(!map)return;if(map._sr){map._sr.remove();map._sr=null}
   const b=name&&st.d.bangunan.find(x=>x[0]==name),p=$('#pil');
@@ -305,7 +381,7 @@ function drawBgn(el,d){
   el.querySelectorAll('.row').forEach(r=>r.onclick=()=>bgSheet(d,d.bangunan[r.dataset.i]))}
 async function bgSheet(d,b){
   const o=document.createElement('div');o.className='lb';let oleh='';try{oleh=localStorage.getItem('oleh')||''}catch(e){}
-  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">DI ${esc(d.nama)} · ${b[1]}, ${b[2]}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button></div><div id="bx"></div></div>`;
+  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">${KATN[kat(b[0])]} · DI ${esc(d.nama)} · ${b[1]}, ${b[2]}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button></div><div id="bx"></div></div>`;
   document.body.appendChild(o);const x=()=>o.remove();o.onclick=e=>{if(e.target===o)x()};sorot(b[0]);
   o.querySelector('#sx').onclick=x;o.querySelector('#s1').onclick=()=>salin(b[1]+', '+b[2]);
   o.querySelector('#s2').onclick=()=>{x();sorot(b[0]);scrollTo({top:0,behavior:'smooth'})};
@@ -314,20 +390,20 @@ async function bgSheet(d,b){
     const [fl,lap]=await Promise.all([muatFoto(d),muatLap(d)]),L=lap.filter(r=>r.bangunan===b[0]).slice(0,6),F=fl.all.filter(f=>f.bangunan===b[0]);
     let h='<h2>Kondisi</h2>'+(L.length?L.map(r=>`<p class="note" style="margin:4px 0"><b style="color:${KW[r.kondisi]}">${esc(KN[r.kondisi]||r.kondisi)}</b> · ${new Date(r.dibuat).toLocaleDateString('id-ID')}${r.oleh?' · '+esc(r.oleh):''}${r.catatan?'<br>'+esc(r.catatan):''}</p>`).join(''):'<p class="note">Belum ada laporan kondisi.</p>');
     h+='<h2>Foto</h2>'+(F.length?'<div class="gal">'+F.map((f,i)=>`<img loading="lazy" src="${ft(f)}" data-i="${i}" alt="foto">`).join('')+'</div>':'<p class="note">Belum ada foto yang tertaut ke bangunan ini.</p>');
-    if(fotoOn())h+=`<div class="fm" style="margin-top:14px"><h2 style="margin:0">Laporkan kondisi</h2><label>Kondisi<select id="kk">${KL.map(k=>`<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label><label>Catatan<input type="text" id="kc" placeholder="Misalnya: pintu macet, saluran tersumbat"></label><label>Nama pelapor<input type="text" id="ko" value="${esc(oleh)}"></label><label>Foto (boleh lebih dari satu)<input type="file" id="kf" accept="image/*" multiple style="color:var(--mu)"></label><div class="act"><button class="btn" id="kg">Pakai lokasi saya</button><button class="btn p" id="kl">Kirim laporan</button></div><p class="note" id="kt"></p></div>`;
+    if(fotoOn())h+=`<div class="fm" style="margin-top:14px"><h2 style="margin:0">Tambah foto atau laporkan kondisi</h2><label>Kondisi bangunan<select id="kk"><option value="">Tidak melapor kondisi, hanya foto</option>${KL.map(k=>`<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label><label>Catatan<input type="text" id="kc" placeholder="Misalnya: pintu macet, saluran tersumbat"></label><label>Nama pelapor<input type="text" id="ko" value="${esc(oleh)}"></label><label>Foto (boleh lebih dari satu)<input type="file" id="kf" accept="image/*" multiple style="color:var(--mu)"></label><div class="act"><button class="btn" id="kg">Pakai lokasi saya</button><button class="btn p" id="kl">Kirim</button></div><p class="note" id="kt"></p></div>`;
     box.innerHTML=h;box.querySelectorAll('.gal').forEach(q=>q.onclick=e=>{const i=e.target.dataset.i;if(i!=null)lb(F[i],d)});
     if(!fotoOn())return;if(msg)g('#kt').textContent=msg;
     g('#kg').onclick=()=>{const t=g('#kt');if(!navigator.geolocation){t.textContent='Peramban ini tidak mendukung lokasi.';return}t.textContent='Mencari lokasi…';
       navigator.geolocation.getCurrentPosition(p=>{pos={lat:p.coords.latitude,lon:p.coords.longitude,akurasi:p.coords.accuracy};const j=Math.round(jarak(pos.lat,pos.lon,b[1],b[2]));t.textContent='Lokasi didapat (±'+Math.round(pos.akurasi)+' m). Jarak ke bangunan sekitar '+j+' m.'+(j>300?' Anda cukup jauh dari bangunan ini, pastikan bangunan yang dipilih sudah benar.':'')},()=>{t.textContent='Lokasi tidak bisa diambil. Izinkan akses lokasi lalu coba lagi.'},{enableHighAccuracy:true,timeout:15000,maximumAge:0})};
     g('#kl').onclick=async()=>{
-      const t=g('#kt'),ol=g('#ko').value.trim(),fs=[...g('#kf').files];try{localStorage.setItem('oleh',ol)}catch(e){}t.textContent='Mengirim…';
+      const t=g('#kt'),ol=g('#ko').value.trim(),fs=[...g('#kf').files];if(!g('#kk').value&&!fs.length){t.textContent='Pilih foto atau kondisi dulu.';return}try{localStorage.setItem('oleh',ol)}catch(e){}t.textContent='Mengirim…';
       const lp={id:Date.now()+Math.random(),tipe:'laporan',nama:d.nama,bangunan:b[0],kondisi:g('#kk').value,catatan:g('#kc').value.trim()||null,oleh:ol||null,lat:pos?pos.lat:null,lon:pos?pos.lon:null,akurasi:pos?pos.akurasi:null};let an=0;
-      try{await kirimLap(lp)}catch(e){try{await qop('readwrite',s=>s.put(lp));an++}catch(e2){}}
+      if(lp.kondisi){try{await kirimLap(lp)}catch(e){try{await qop('readwrite',s=>s.put(lp));an++}catch(e2){}}}
       for(const [i,f] of fs.entries()){t.textContent='Memproses foto '+(i+1)+' dari '+fs.length+'…';
         const base=slug(d.nama)+'/laporan-lapangan/'+Date.now().toString(36)+i,it={id:Date.now()+i+Math.random(),nama:d.nama,folder:'Laporan lapangan',nomor:b[0],bangunan:b[0],oleh:ol,diambil:new Date(f.lastModified).toISOString(),path:base+'.jpg',tpath:base+'_t.jpg'};
         try{it.full=await kecil(f,1280,.75);it.thumb=await kecil(f,360,.7)}catch(e){continue}
         try{await kirim(it)}catch(e){try{await qop('readwrite',s=>s.put(it));an++}catch(e2){}}}
-      warnai();if(st.tab=='bgn'&&st.d===d)drawBgn($('#tb'),d);await isi(an?'Tersimpan di HP, menunggu sinyal. Ketuk Sinkron di tab Foto nanti.':'Laporan terkirim.')};
+      warnai();if(st.tab=='bgn'&&st.d===d)drawBgn($('#tb'),d);await isi(an?'Tersimpan di HP, menunggu sinyal. Ketuk Sinkron di tab Foto nanti.':'Terkirim.')};
   };
   isi();
 }
