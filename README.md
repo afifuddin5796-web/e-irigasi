@@ -13,7 +13,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 - Tab **Debit** dan **Bangunan**.
 - Tab **Foto**: galeri foto bangunan. Foto lama bisa disimpan di repositori (folder `foto/`), foto baru diunggah dari HP lewat Supabase dengan antrean tanpa sinyal dan menu **Sinkron** (lihat [docs/FOTO.md](docs/FOTO.md)).
 - Laporan kondisi bangunan dari lokasi (kondisi, catatan, foto, lokasi HP); titik di peta berubah warna sesuai kondisi terakhir.
-- Pembaruan sederhana dari aplikasi: ubah luas baku, ganti peta DI dari berkas KMZ, unggah Excel tanaman, lalu unduh `data.json` dan unggah ke GitHub (lihat [docs/PEMBARUAN.md](docs/PEMBARUAN.md)). Menu ini hanya tampil di mode pengelola (ketuk judul aplikasi 5 kali). Juru hanya melihat peta, skema, debit, dan menambah foto ([docs/PANDUAN_JURU.md](docs/PANDUAN_JURU.md)).
+- Pembaruan sederhana dari aplikasi: ubah luas baku, ganti peta DI dari berkas KMZ, unggah Excel tanaman, lalu unduh `data.json` dan unggah ke GitHub (lihat [docs/PEMBARUAN.md](docs/PEMBARUAN.md)). Pengelola juga bisa menambah titik aset (sumber air, bendung, dan lainnya) dan daerah irigasi baru dari aplikasi. Menu ini hanya tampil di mode pengelola (ketuk judul aplikasi 5 kali). Juru hanya melihat peta, skema, debit, dan menambah foto ([docs/PANDUAN_JURU.md](docs/PANDUAN_JURU.md)).
 - Koordinat bisa disalin dan dibuka di Google Maps dari kotak koordinat peta maupun dari tiap bangunan.
 - Menu **Perbarui data tanaman**: unggah Excel laporan dengan format yang sama, hasilnya langsung tampil.
 
