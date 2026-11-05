@@ -35,7 +35,9 @@ Agar foto dan laporan kondisi tetap tertaut, **pertahankan nama bangunan** di KM
 
 ## 3. Data tanaman dan debit (mingguan)
 
-Di layar pilih juru, bagian **Perbarui data tanaman**, pilih Excel laporan terbaru.
+Di layar pilih juru, bagian **Perbarui data tanaman**, pilih Excel laporan 10 harian terbaru. Dari Excel yang sama aplikasi mengisi tanaman, debit (rencana, rata-rata, dan tinggi), serta **limpasan (loberan)** setiap bendung dan mata air (lebar, kondisi, tinggi dan debit per hari). Limpasan tampil di tab **Debit** dan di rincian aset bendung atau sumber air. Bila tercatat banjir di Excel, keterangannya ikut ditampilkan.
+
+Sheet yang dibaca: `5`, `5a`, dan `06`. Kolom hari ke-1 sampai ke-11 pada sheet `06` dibaca dari kolom K sampai U, kolom J adalah rencana, dan kolom V adalah debit rata-rata.
 
 ## 4. Mengirim pembaruan ke semua juru
 

@@ -23,6 +23,8 @@ Setelah memilih nama juru, layar pertama menampilkan **kelompok aset** di wilaya
    - bila diminta melaporkan kondisi, pilih kondisinya dan tulis catatan singkat.
 5. Tekan **Kirim**. Foto langsung bisa dilihat semua juru.
 
+Pada rincian **bendung** dan **sumber air** ada bagian **Limpasan (loberan)** berisi data pengukuran 10 harian terakhir. Tab **Debit** pada daerah irigasi menampilkan limpasan semua bendung di DI itu.
+
 Di bagian atas rincian bangunan ada foto yang sudah ada, jadi Anda bisa melihat foto lama sebagai pembanding.
 
 ## Bila tidak ada sinyal di lokasi
