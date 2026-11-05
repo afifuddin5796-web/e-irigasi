@@ -99,12 +99,12 @@ a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},DN=[],ADM=false,MSG='';
+let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},DN=[],EV={},ADM=false,MSG='';
 const $=s=>document.querySelector(s),app=$('#app'),n1=(x,d=1)=>(+x||0).toLocaleString('id-ID',{maximumFractionDigits:d}),
 esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const baku=d=>{if(OV[d.nama]!=null)return OV[d.nama];if(d.bakuEdit!=null)return d.bakuEdit;const x=d.tanam&&d.tanam.baku;if(!x)return d.bakuKmz;return Math.abs(x-d.bakuKmz)/x>.15?Math.max(x,d.bakuKmz):x};
-try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');DN=JSON.parse(localStorage.getItem('dn')||'[]');ADM=localStorage.getItem('adm')==='1'}catch(e){}
-fetch('data.json').then(r=>r.json()).then(j=>{DB=j;limpas();applyDn();applyUp();applyKz();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
+try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');DN=JSON.parse(localStorage.getItem('dn')||'[]');EV=JSON.parse(localStorage.getItem('elev')||'{}');ADM=localStorage.getItem('adm')==='1'}catch(e){}
+fetch('data.json').then(r=>r.json()).then(j=>{DB=j;EV={...(DB.elev||{}),...EV};limpas();applyDn();applyUp();applyKz();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
 $('#back').onclick=()=>{if(st.d){st.d=null}else if(st.k){st.k=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
 function route(){$('#adm').hidden=!ADM;if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
 function home(){
@@ -134,17 +134,28 @@ function listAset(a){
     lv.innerHTML='<div class="cards"><div class="card"><span>Daerah irigasi</span><b>'+a.length+'</b></div><div class="card"><span>Total aset</span><b>'+A.length+'</b></div><div class="card"><span>Baku sawah</span><b>'+n1(a.reduce((s,d)=>s+baku(d),0),0)+' <small>ha</small></b></div></div><h2>Kelompok aset</h2><div class="juru">'+
       KAT.filter(k=>c[k[0]]).map(k=>`<button class="jb" data-k="${k[0]}" style="border-left:4px solid ${KC[k[0]]}"><b>${k[1]}</b><span>${c[k[0]]} aset · ${dd[k[0]].size} DI</span></button>`).join('')+'</div>';
     lv.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.k=b.dataset.k;route()});return}
-  lv.innerHTML='<input type="search" id="q" placeholder="Cari nama aset atau daerah irigasi" aria-label="Cari aset"><div id="ls"></div>';
-  let lim=300;
-  const draw=()=>{
-    const q=$('#q').value.toLowerCase(),L=A.filter(x=>x.k==st.k&&((x.b[0]||'').toLowerCase().includes(q)||x.d.nama.toLowerCase().includes(q))).sort((p,r)=>p.d.nama.localeCompare(r.d.nama)||(p.b[0]||'').localeCompare(r.b[0]||'',undefined,{numeric:true}));
+  const pakaiEl=st.k=='bendung'||st.k=='sumber',kk=st.k;if(!st.u)st.u='el';
+  lv.innerHTML='<input type="search" id="q" placeholder="Cari nama aset atau daerah irigasi" aria-label="Cari aset">'+(pakaiEl?'<div class="tabs" style="margin:0 0 10px">'+[['el','Dari tertinggi'],['di','Per daerah irigasi']].map(x=>`<button data-u="${x[0]}">${x[1]}</button>`).join('')+'</div><p class="note" id="elm"></p>':'')+'<div id="ls"></div>';
+  let lim=300,pesan='';
+  const pts=()=>A.filter(x=>x.k==kk).map(x=>[x.b[1],x.b[2]]),kurang=()=>pts().some(p=>EV[p[0]+','+p[1]]==null),
+  ev=x=>{const v=EV[ek(x.b)];return v==null?-1e9:v},
+  draw=()=>{
+    const q=$('#q').value.toLowerCase(),F=A.filter(x=>x.k==kk&&((x.b[0]||'').toLowerCase().includes(q)||x.d.nama.toLowerCase().includes(q))),byEl=pakaiEl&&st.u=='el',nat=(p,r)=>(p.b[0]||'').localeCompare(r.b[0]||'',undefined,{numeric:true});
+    const L=byEl?F.sort((p,r)=>ev(r)-ev(p)||nat(p,r)):F.sort((p,r)=>p.d.nama.localeCompare(r.d.nama)||nat(p,r));
     let h='<p class="note">'+L.length+' aset</p>',last='';
-    L.slice(0,lim).forEach(x=>{if(x.d.nama!==last){h+='<h2>DI '+esc(x.d.nama)+'</h2>';last=x.d.nama}h+=`<button class="row" data-d="${x.d.id}" data-i="${x.i}"><b>${esc(x.b[0]||'(tanpa nama)')}</b><em>›</em><span>${x.b[1]}, ${x.b[2]}</span><span></span></button>`});
+    L.slice(0,lim).forEach(x=>{
+      if(!byEl&&x.d.nama!==last){h+='<h2>DI '+esc(x.d.nama)+'</h2>';last=x.d.nama}
+      const e=EV[ek(x.b)];
+      h+=`<button class="row" data-d="${x.d.id}" data-i="${x.i}"><b>${esc(x.b[0]||'(tanpa nama)')}</b><em>${e!=null?e+' m':'›'}</em><span>${byEl?'DI '+esc(x.d.nama)+' · ':''}${x.b[1]}, ${x.b[2]}</span><span></span></button>`});
     if(L.length>lim)h+='<div class="act"><button class="btn" id="mr">Tampilkan lebih banyak</button></div>';
-    $('#ls').innerHTML=h;
+    $('#ls').innerHTML=h;lv.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.u==st.u));const em=$('#elm');if(em)em.textContent=pesan;
     $('#ls').querySelectorAll('.row').forEach(r=>r.onclick=()=>{const d=DB.di.find(z=>z.id==r.dataset.d),b=d.bangunan[r.dataset.i];st.d=d;st.tab='bgn';route();bgSheet(d,b)});
-    const m=$('#mr');if(m)m.onclick=()=>{lim+=300;draw()}};
-  $('#q').oninput=()=>{lim=300;draw()};draw();
+    const m=$('#mr');if(m)m.onclick=()=>{lim+=300;draw()}},
+  ambil=()=>{if(!pakaiEl)return;if(!kurang()){pesan=ELT;return}pesan='Mengambil data ketinggian…';
+    muatElev(pts()).then(()=>{pesan=kurang()?'Sebagian aset belum punya data ketinggian dan ditaruh di bagian akhir. '+ELT:ELT;if(st.k===kk&&$('#ls'))draw()}).catch(()=>{pesan='Ketinggian belum bisa diambil, periksa sinyal. Ketuk Dari tertinggi untuk mencoba lagi.';st.u='di';if(st.k===kk&&$('#ls'))draw()})};
+  lv.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.u=b.dataset.u;if(st.u=='el'&&kurang())ambil();else if(st.u=='el')pesan=ELT;lim=300;draw()});
+  $('#q').oninput=()=>{lim=300;draw()};
+  if(pakaiEl&&st.u=='el')ambil();draw();
 }
 function detail(){
   const d=st.d,t=d.tanam;
@@ -227,7 +238,7 @@ function xl(){
   $('#xs').textContent=MSG||(loc()?'Perubahan di perangkat ini: '+loc()+'. Periode data: '+DB.periode+'.':'Periode data saat ini: '+DB.periode+'.');
   $('#xf').onchange=imp;$('#dl').onclick=dl;const r=$('#rx');if(r)r.onclick=()=>{try{['up','ov','kz','lt','dn'].forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()};
 }
-function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});DB.versi=Date.now();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
+function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});DB.versi=Date.now();DB.elev=EV;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
 async function imp(e){
   const f=e.target.files[0];if(!f)return;$('#xs').textContent='Membaca file…';
   try{
@@ -425,6 +436,17 @@ function cariLim(d,b){
   if(m.length==1)return m[0];
   if(P.length==1&&d.bangunan.filter(x=>kat(x[0])==jn).length==1)return P[0];return null}
 /*EL*/
+/*V*/
+const ek=b=>b[1]+','+b[2],ELT='Ketinggian: perkiraan dari Copernicus DEM 90 m (Open-Meteo), dalam meter di atas permukaan laut.';
+async function muatElev(pts){
+  const m=new Map();pts.forEach(p=>{const k=p[0]+','+p[1];if(EV[k]==null)m.set(k,p)});const need=[...m.values()];
+  for(let i=0;i<need.length;i+=100){
+    const ch=need.slice(i,i+100),r=await fetch('https://api.open-meteo.com/v1/elevation?latitude='+ch.map(p=>p[0]).join(',')+'&longitude='+ch.map(p=>p[1]).join(','));
+    if(!r.ok)throw new Error('elevasi '+r.status);const j=await r.json();
+    ch.forEach((p,k)=>{const e=j.elevation&&j.elevation[k];if(typeof e=='number')EV[p[0]+','+p[1]]=Math.round(e)});
+    try{localStorage.setItem('elev',JSON.stringify(EV))}catch(e){}}
+}
+/*EV2*/
 let tp=0,tt;
 $('#ttl').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,2500);if(tp>=5){tp=0;ADM=!ADM;try{localStorage.setItem('adm',ADM?'1':'0')}catch(e){}toast(ADM?'Mode pengelola aktif':'Mode pengelola nonaktif');route()}};
 function sorot(name){
@@ -445,7 +467,7 @@ function drawBgn(el,d){
   el.querySelectorAll('.row').forEach(r=>r.onclick=()=>bgSheet(d,d.bangunan[r.dataset.i]))}
 async function bgSheet(d,b){
   const o=document.createElement('div');o.className='lb';let oleh='';try{oleh=localStorage.getItem('oleh')||''}catch(e){}
-  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">${KATN[kat(b[0])]} · DI ${esc(d.nama)} · ${b[1]}, ${b[2]}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button>${ADM?'<button class="btn" id="sh">Hapus aset</button>':''}</div><div id="bx"></div></div>`;
+  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">${KATN[kat(b[0])]} · DI ${esc(d.nama)} · ${b[1]}, ${b[2]}${EV[b[1]+','+b[2]]!=null?' · ketinggian sekitar '+EV[b[1]+','+b[2]]+' m':''}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button>${ADM?'<button class="btn" id="sh">Hapus aset</button>':''}</div><div id="bx"></div></div>`;
   document.body.appendChild(o);const x=()=>o.remove();o.onclick=e=>{if(e.target===o)x()};sorot(b[0]);
   o.querySelector('#sx').onclick=x;const sh=o.querySelector('#sh');if(sh)sh.onclick=()=>{if(!confirm('Hapus aset "'+b[0]+'" dari peta DI '+d.nama+'?'))return;const i=d.bangunan.indexOf(b);if(i<0)return;d.bangunan.splice(i,1);persistGeo(d);x();route()};o.querySelector('#s1').onclick=()=>salin(b[1]+', '+b[2]);
   o.querySelector('#s2').onclick=()=>{x();sorot(b[0]);scrollTo({top:0,behavior:'smooth'})};

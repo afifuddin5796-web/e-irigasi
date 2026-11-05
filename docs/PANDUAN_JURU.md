@@ -9,6 +9,7 @@ Setelah memilih nama juru, layar pertama menampilkan **kelompok aset** di wilaya
 
 1. Ketuk satu kelompok, misalnya **Bendung**.
 2. Daftar aset muncul, dikelompokkan per daerah irigasi. Gunakan kolom cari untuk mencari nama aset atau daerah irigasi.
+   Khusus **Bendung** dan **Sumber air**, daftar otomatis diurutkan **dari yang tertinggi (paling hulu) ke yang terendah**, dengan ketinggian dalam meter di sebelah kanan. Ketuk **Per daerah irigasi** untuk mengelompokkannya per DI. Ketinggian diambil dari internet saat daftar pertama kali dibuka (butuh sinyal), setelah itu tersimpan di HP.
 3. Ketuk satu aset. Aplikasi membuka daerah irigasinya, menandai aset itu di peta dengan lingkaran merah, dan menampilkan rinciannya (koordinat, foto, kondisi).
 4. Tombol panah di kiri atas membawa Anda kembali ke daftar kelompok. Tab **Daerah irigasi** menampilkan daftar DI seperti biasa.
 

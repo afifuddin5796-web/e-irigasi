@@ -12,6 +12,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 - Tab **Ringkasan**: baku, panjang saluran, tanaman per DI, serta menu mengubah luas baku.
 - Tab **Debit** dan **Bangunan**.
 - Tab **Foto**: galeri foto bangunan. Foto lama bisa disimpan di repositori (folder `foto/`), foto baru diunggah dari HP lewat Supabase dengan antrean tanpa sinyal dan menu **Sinkron** (lihat [docs/FOTO.md](docs/FOTO.md)).
+- Daftar bendung dan sumber air diurutkan dari yang tertinggi (hulu) ke terendah. Ketinggian diambil dari Copernicus DEM 90 m lewat Open-Meteo (gratis untuk non-komersial, mohon cantumkan kedua sumber itu), disimpan di HP, dan ikut terbawa di `data.json` bila diunduh oleh pengelola. Ini perkiraan dengan ketelitian beberapa meter.
 - Limpasan (loberan) bendung dan mata air dari Excel laporan 10 harian: lebar, kondisi, tinggi dan debit per hari, tampil di tab Debit dan di rincian aset.
 - Laporan kondisi bangunan dari lokasi (kondisi, catatan, foto, lokasi HP); titik di peta berubah warna sesuai kondisi terakhir.
 - Pembaruan sederhana dari aplikasi: ubah luas baku, ganti peta DI dari berkas KMZ, unggah Excel tanaman, lalu unduh `data.json` dan unggah ke GitHub (lihat [docs/PEMBARUAN.md](docs/PEMBARUAN.md)). Pengelola juga bisa menambah titik aset (sumber air, bendung, dan lainnya) dan daerah irigasi baru dari aplikasi. Menu ini hanya tampil di mode pengelola (ketuk judul aplikasi 5 kali). Juru hanya melihat peta, skema, debit, dan menambah foto ([docs/PANDUAN_JURU.md](docs/PANDUAN_JURU.md)).
