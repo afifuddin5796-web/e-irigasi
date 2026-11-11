@@ -26,7 +26,7 @@ Desa ditentukan dari koordinat aset dan peta batas desa Kabupaten Pasuruan, jadi
 
 ## Menambah foto
 
-1. Buka aplikasi, pilih **nama juru** Anda.
+1. Buka aplikasi. Layar pertama menampilkan ringkasan UPT Pengelolaan Sumber Daya Air Purwosari. Gulir ke bagian **Pilih juru pengairan** lalu ketuk **nama juru** Anda. Bila Anda sudah pernah memilih, tombol **Lanjutkan sebagai Juru ...** ada di atas daftar nama.
 2. Pilih **daerah irigasi** yang sedang dikunjungi.
 3. Buka tab **Bangunan**, lalu ketuk bangunannya. Bisa juga ketuk titik hijau di peta, lalu tekan **Detail**.
 4. Pada **Tambah foto atau laporkan kondisi**:

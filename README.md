@@ -6,6 +6,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 ## Fitur
 
 - Setelah memilih juru, aset irigasi di wilayahnya dikelompokkan otomatis dari nama bangunan di peta (sumber air, bendung, bangunan bagi dan sadap, pelimpah, gorong-gorong, boks tersier, ujung saluran, dan lainnya), dan setiap aset bisa dibuka langsung di peta. Tab **Daerah irigasi** menampilkan daftar DI.
+- Beranda berupa kotak **UPT Pengelolaan Sumber Daya Air Purwosari** yang memuat luas baku seluruh daerah irigasi, jumlah DI dan juru, panjang saluran, total aset per kelompok, realisasi tanam periode berjalan, dan jumlah bendung yang mengalami limpasan. Juru yang pernah memilih nama mendapat tombol **Lanjutkan sebagai Juru ...**.
 - Pilih juru pengairan (Krangkong, Sadan, Sengon, Purwodadi, Rejoso, Sukorejo, Sukun), lalu daerah irigasi di bawahnya.
 - Peta satelit atau peta gelap dengan koordinat, saluran, petak baku, dan bangunan (dari berkas KMZ).
 - Tab **Skema**: gambar skema jaringan dari berkas DXF, bisa digeser dan diperbesar. Ketuk petak atau bangunan bagi untuk melihat data Excel, debit terukur, dan tombol "Lihat di peta".

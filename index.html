@@ -88,6 +88,13 @@ a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 .sr i{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#ff2d55;border:2px solid #fff;box-shadow:0 0 14px 6px #ff2d55}
 @keyframes dn{from{transform:scale(.3);opacity:1}to{transform:scale(1.6);opacity:0}}
 @media(prefers-reduced-motion:reduce){.sr::before,.sr::after{animation:none}}
+.hero{background:linear-gradient(135deg,#0d3346,#111b2f 65%);border:1px solid #22d3ee66;border-radius:16px;padding:18px;margin-bottom:6px}
+.hk{color:var(--cy);font-weight:800;font-size:14px;line-height:1.35}
+.hn{font-size:42px;font-weight:800;line-height:1.1;margin-top:8px}.hn small{font-size:18px;color:var(--mu);font-weight:600}
+.hl{color:var(--mu);font-size:13px}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.chip{background:var(--s1);border:1px solid var(--ln);border-radius:10px;padding:10px 12px}
+.chip b{display:block;font-size:20px;font-weight:800}.chip span{color:var(--mu);font-size:12px}
 .imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
 </style>
 </head>
@@ -99,19 +106,32 @@ a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},DN=[],EV={},ADM=false,MSG='';
+let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},DN=[],EV={},ADM=false,JU='',MSG='';
 const $=s=>document.querySelector(s),app=$('#app'),n1=(x,d=1)=>(+x||0).toLocaleString('id-ID',{maximumFractionDigits:d}),
 esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const baku=d=>{if(OV[d.nama]!=null)return OV[d.nama];if(d.bakuEdit!=null)return d.bakuEdit;const x=d.tanam&&d.tanam.baku;if(!x)return d.bakuKmz;return Math.abs(x-d.bakuKmz)/x>.15?Math.max(x,d.bakuKmz):x};
-try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');DN=JSON.parse(localStorage.getItem('dn')||'[]');EV=JSON.parse(localStorage.getItem('elev')||'{}');ADM=localStorage.getItem('adm')==='1'}catch(e){}
+try{JU=localStorage.getItem('juru')||'';OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');DN=JSON.parse(localStorage.getItem('dn')||'[]');EV=JSON.parse(localStorage.getItem('elev')||'{}');ADM=localStorage.getItem('adm')==='1'}catch(e){}
 fetch('data.json').then(r=>r.json()).then(j=>{DB=j;EV={...(DB.elev||{}),...EV};limpas();applyDn();applyUp();applyKz();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
-$('#back').onclick=()=>{if(st.d){st.d=null}else if(st.k){st.k=null}else if(st.w!=null){st.w=null;st.v='wil'}else{st.j=null;st.w=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
+$('#back').onclick=()=>{if(st.d){st.d=null}else if(st.k){st.k=null}else if(st.w!=null){st.w=null;st.v='wil'}else{st.j=null;st.w=null;}route()};
 function route(){$('#adm').hidden=!ADM;if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
 function home(){
-  $('#ttl').innerHTML='e-Irigasi<small>UPTD Purwosari · Periode '+esc(DB.periode)+'</small>';
-  app.innerHTML='<p class="lead">Pilih juru pengairan untuk melihat daerah irigasi yang menjadi tanggung jawab Anda.</p><div class="juru">'+
-  DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
-  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});if(ADM)xl();
+  $('#ttl').innerHTML='e-Irigasi<small>Periode '+esc(DB.periode)+'</small>';
+  const L=DB.di,B=L.reduce((s,d)=>s+baku(d),0),PK=L.reduce((s,d)=>s+(+d.panjangKm||0),0),C={};let NA=0;
+  L.forEach(d=>d.bangunan.forEach(b=>{const k=kat(b[0]);C[k]=(C[k]||0)+1;NA++}));
+  const T={padi:0,tebu:0,palawija:0,bero:0,panen:0};let nt=0;
+  L.forEach(d=>{if(d.tanam){nt++;for(const k in T)T[k]+=+d.tanam[k]||0}});
+  let lb=0,ll=0;L.forEach(d=>(d.limpasan||[]).forEach(x=>{if(x.jenis=='bendung'){lb++;if((x.q||[]).some(v=>v>0))ll++}}));
+  const bars=[['Padi',T.padi,'#a3e635'],['Tebu',T.tebu,'#22d3ee'],['Palawija',T.palawija,'#fbbf24'],['Bero',T.bero,'#fb7185'],['Habis panen',T.panen,'#c4b5fd']];
+  app.innerHTML=`<section class="hero"><div class="hk">UPT Pengelolaan Sumber Daya Air Purwosari</div><div class="hn">${n1(B,0)} <small>ha</small></div><div class="hl">Luas baku sawah seluruh daerah irigasi</div><div class="cards" style="margin-top:14px">`+
+   [['Daerah irigasi',n1(L.length,0)],['Juru pengairan',n1(DB.juru.length,0)],['Panjang saluran',n1(PK,0)+' <small>km</small>'],['Total aset irigasi',n1(NA,0)]].map(x=>`<div class="card"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')+`</div></section>`+
+   (nt?`<h2>Realisasi tanam periode ${esc(DB.periode)}</h2>`+bars.map(r=>`<div class="bar"><span>${r[0]}</span><div><i style="width:${Math.min(100,B?r[1]/B*100:0)}%;background:${r[2]}"></i></div><b>${n1(r[1],0)} ha</b></div>`).join('')+`<p class="note">Persentase terhadap luas baku seluruhnya.${nt<L.length?' Data tanaman terbaca untuk '+nt+' dari '+L.length+' daerah irigasi.':''}</p>`:'')+
+   `<h2>Aset irigasi</h2><div class="chips">`+KAT.filter(k=>C[k[0]]).map(k=>`<div class="chip" style="border-left:4px solid ${KC[k[0]]}"><b>${n1(C[k[0]],0)}</b><span>${k[1]}</span></div>`).join('')+`</div>`+
+   (lb?`<p class="note">Limpasan (loberan) tercatat di ${ll} dari ${lb} bendung yang diukur pada periode ini.</p>`:'')+
+   `<h2>Pilih juru pengairan</h2>`+(JU&&DB.juru.includes(JU)?`<div class="act" style="margin:0 0 12px"><button class="btn p" id="lj" type="button">Lanjutkan sebagai Juru ${esc(JU)}</button></div>`:'')+
+   '<div class="juru">'+DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
+  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;JU=st.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});
+  const lj=$('#lj');if(lj)lj.onclick=()=>{st.j=JU;route()};
+  if(ADM)xl();
 }
 function list(){
   const a=DB.di.filter(d=>d.juru===st.j);st.v=st.v||'aset';
