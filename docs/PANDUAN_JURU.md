@@ -13,6 +13,17 @@ Setelah memilih nama juru, layar pertama menampilkan **kelompok aset** di wilaya
 3. Ketuk satu aset. Aplikasi membuka daerah irigasinya, menandai aset itu di peta dengan lingkaran merah, dan menampilkan rinciannya (koordinat, foto, kondisi).
 4. Tombol panah di kiri atas membawa Anda kembali ke daftar kelompok. Tab **Daerah irigasi** menampilkan daftar DI seperti biasa.
 
+## Melihat aset per desa
+
+Selain per kelompok, aset bisa dilihat per **desa**, misalnya untuk tahu bendung dan sumber air apa saja yang ada di desa tertentu.
+
+1. Pilih nama juru, lalu buka tab **Wilayah (desa)**. Daftar desa tampil lengkap dengan kecamatan dan jumlah aset, bendung, sumber air, dan daerah irigasinya.
+2. Ketuk satu desa. Layar berikutnya menampilkan kelompok aset di desa itu (bendung, sumber air, dan lainnya). Ketuk kelompok untuk melihat daftarnya. Tombol **Lihat semua desa** kembali ke daftar desa.
+
+Sebaliknya, setiap aset menampilkan desanya. Misalnya pada bendung Gendol tertulis **Desa Pakukerto, Kec. Sukorejo**. Di rincian aset, tombol **Aset lain di desa ini** membuka daftar aset di desa yang sama. Kolom cari di daftar aset juga bisa dipakai untuk mengetik nama desa. Pada tab **Ringkasan** setiap daerah irigasi ada baris **Letak aset** yang menyebut desa-desa tempat asetnya berada.
+
+Desa ditentukan dari koordinat aset dan peta batas desa Kabupaten Pasuruan, jadi aset yang berada tepat di perbatasan bisa terbaca masuk desa tetangga.
+
 ## Menambah foto
 
 1. Buka aplikasi, pilih **nama juru** Anda.

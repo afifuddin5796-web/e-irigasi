@@ -12,6 +12,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 - Tab **Ringkasan**: baku, panjang saluran, tanaman per DI, serta menu mengubah luas baku.
 - Tab **Debit** dan **Bangunan**.
 - Tab **Foto**: galeri foto bangunan. Foto lama bisa disimpan di repositori (folder `foto/`), foto baru diunggah dari HP lewat Supabase dengan antrean tanpa sinyal dan menu **Sinkron** (lihat [docs/FOTO.md](docs/FOTO.md)).
+- Pembagian wilayah: tab **Wilayah (desa)** menampilkan desa beserta aset di dalamnya (bendung, sumber air, dan lainnya), dan setiap aset menampilkan desa serta kecamatannya, dihitung dari koordinat dan batas desa Kabupaten Pasuruan (`desa.json`).
 - Daftar bendung dan sumber air diurutkan dari yang tertinggi (hulu) ke terendah. Ketinggian diambil dari Copernicus DEM 90 m lewat Open-Meteo (gratis untuk non-komersial, mohon cantumkan kedua sumber itu), disimpan di HP, dan ikut terbawa di `data.json` bila diunduh oleh pengelola. Ini perkiraan dengan ketelitian beberapa meter.
 - Limpasan (loberan) bendung dan mata air dari Excel laporan 10 harian: lebar, kondisi, tinggi dan debit per hari, tampil di tab Debit dan di rincian aset.
 - Laporan kondisi bangunan dari lokasi (kondisi, catatan, foto, lokasi HP); titik di peta berubah warna sesuai kondisi terakhir.
@@ -27,6 +28,7 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 | `data.json` | Data DI: peta, tanaman, debit, per petak |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Berkas PWA (bisa dipasang seperti aplikasi dan dibuka tanpa sinyal) |
 | `config.js` | Alamat dan kunci Supabase untuk foto (isi sesuai docs/FOTO.md) |
+| `desa.json` | Batas desa yang disederhanakan untuk menentukan desa tiap aset |
 | `skema/*.json` | Skema jaringan per DI (nama berkas = nomor DI di `data.json`) |
 | `tools/` | Skrip Python: membangun ulang `data.json` dan `skema/`, dan `siapkan_foto_repo.py` (foto ke folder `foto/`) dan `unggah_foto.py` (foto massal ke Supabase) |
 | `docs/` | Panduan pengaturan GitHub |

@@ -75,6 +75,8 @@ Simpan juga berkas KMZ baru di folder `data_sumber` di komputer Anda. Bila suatu
 
 ## 7. Yang masih memakai skrip (jarang)
 
+- Batas desa berubah atau berasal dari berkas lain: jalankan `python tools/bangun_desa.py "data_sumber/BATAS DESA KAB PASURUAN.kmz" desa.json`, lalu unggah `desa.json` yang baru. Aset baru (titik atau DI baru) otomatis ikut dikelompokkan ke desa karena desa dihitung dari koordinat, tanpa perlu membuat ulang data.
+
 - DI yang namanya berubah di Excel.
 - Skema jaringan (DXF) yang berubah.
 
