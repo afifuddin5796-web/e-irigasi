@@ -6,15 +6,12 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 ## Fitur
 
 - Setelah memilih juru, aset irigasi di wilayahnya dikelompokkan otomatis dari nama bangunan di peta (sumber air, bendung, bangunan bagi dan sadap, pelimpah, gorong-gorong, boks tersier, ujung saluran, dan lainnya), dan setiap aset bisa dibuka langsung di peta. Tab **Daerah irigasi** menampilkan daftar DI.
-- Beranda berupa kotak **UPT Pengelolaan Sumber Daya Air Purwosari** yang memuat luas baku seluruh daerah irigasi, jumlah DI dan juru, panjang saluran, total aset per kelompok, realisasi tanam periode berjalan, dan jumlah bendung yang mengalami limpasan. Juru yang pernah memilih nama mendapat tombol **Lanjutkan sebagai Juru ...**.
 - Pilih juru pengairan (Krangkong, Sadan, Sengon, Purwodadi, Rejoso, Sukorejo, Sukun), lalu daerah irigasi di bawahnya.
 - Peta satelit atau peta gelap dengan koordinat, saluran, petak baku, dan bangunan (dari berkas KMZ).
 - Tab **Skema**: gambar skema jaringan dari berkas DXF, bisa digeser dan diperbesar. Ketuk petak atau bangunan bagi untuk melihat data Excel, debit terukur, dan tombol "Lihat di peta".
 - Tab **Ringkasan**: baku, panjang saluran, tanaman per DI, serta menu mengubah luas baku.
 - Tab **Debit** dan **Bangunan**.
 - Tab **Foto**: galeri foto bangunan. Foto lama bisa disimpan di repositori (folder `foto/`), foto baru diunggah dari HP lewat Supabase dengan antrean tanpa sinyal dan menu **Sinkron** (lihat [docs/FOTO.md](docs/FOTO.md)).
-- Pembagian wilayah: tab **Wilayah (desa)** menampilkan desa beserta aset di dalamnya (bendung, sumber air, dan lainnya), dan setiap aset menampilkan desa serta kecamatannya, dihitung dari koordinat dan batas desa Kabupaten Pasuruan (`desa.json`).
-- Daftar bendung dan sumber air diurutkan dari yang tertinggi (hulu) ke terendah. Ketinggian diambil dari Copernicus DEM 90 m lewat Open-Meteo (gratis untuk non-komersial, mohon cantumkan kedua sumber itu), disimpan di HP, dan ikut terbawa di `data.json` bila diunduh oleh pengelola. Ini perkiraan dengan ketelitian beberapa meter.
 - Limpasan (loberan) bendung dan mata air dari Excel laporan 10 harian: lebar, kondisi, tinggi dan debit per hari, tampil di tab Debit dan di rincian aset.
 - Laporan kondisi bangunan dari lokasi (kondisi, catatan, foto, lokasi HP); titik di peta berubah warna sesuai kondisi terakhir.
 - Pembaruan sederhana dari aplikasi: ubah luas baku, ganti peta DI dari berkas KMZ, unggah Excel tanaman, lalu unduh `data.json` dan unggah ke GitHub (lihat [docs/PEMBARUAN.md](docs/PEMBARUAN.md)). Pengelola juga bisa menambah titik aset (sumber air, bendung, dan lainnya) dan daerah irigasi baru dari aplikasi. Menu ini hanya tampil di mode pengelola (ketuk judul aplikasi 5 kali). Juru hanya melihat peta, skema, debit, dan menambah foto ([docs/PANDUAN_JURU.md](docs/PANDUAN_JURU.md)).
@@ -29,7 +26,6 @@ Menampilkan baku sawah, panjang saluran, bangunan, debit, dan realisasi tanam (p
 | `data.json` | Data DI: peta, tanaman, debit, per petak |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Berkas PWA (bisa dipasang seperti aplikasi dan dibuka tanpa sinyal) |
 | `config.js` | Alamat dan kunci Supabase untuk foto (isi sesuai docs/FOTO.md) |
-| `desa.json` | Batas desa yang disederhanakan untuk menentukan desa tiap aset |
 | `skema/*.json` | Skema jaringan per DI (nama berkas = nomor DI di `data.json`) |
 | `tools/` | Skrip Python: membangun ulang `data.json` dan `skema/`, dan `siapkan_foto_repo.py` (foto ke folder `foto/`) dan `unggah_foto.py` (foto massal ke Supabase) |
 | `docs/` | Panduan pengaturan GitHub |
