@@ -9,24 +9,12 @@ Setelah memilih nama juru, layar pertama menampilkan **kelompok aset** di wilaya
 
 1. Ketuk satu kelompok, misalnya **Bendung**.
 2. Daftar aset muncul, dikelompokkan per daerah irigasi. Gunakan kolom cari untuk mencari nama aset atau daerah irigasi.
-   Khusus **Bendung** dan **Sumber air**, daftar otomatis diurutkan **dari yang tertinggi (paling hulu) ke yang terendah**, dengan ketinggian dalam meter di sebelah kanan. Ketuk **Per daerah irigasi** untuk mengelompokkannya per DI. Ketinggian diambil dari internet saat daftar pertama kali dibuka (butuh sinyal), setelah itu tersimpan di HP.
 3. Ketuk satu aset. Aplikasi membuka daerah irigasinya, menandai aset itu di peta dengan lingkaran merah, dan menampilkan rinciannya (koordinat, foto, kondisi).
 4. Tombol panah di kiri atas membawa Anda kembali ke daftar kelompok. Tab **Daerah irigasi** menampilkan daftar DI seperti biasa.
 
-## Melihat aset per desa
-
-Selain per kelompok, aset bisa dilihat per **desa**, misalnya untuk tahu bendung dan sumber air apa saja yang ada di desa tertentu.
-
-1. Pilih nama juru, lalu buka tab **Wilayah (desa)**. Daftar desa tampil lengkap dengan kecamatan dan jumlah aset, bendung, sumber air, dan daerah irigasinya.
-2. Ketuk satu desa. Layar berikutnya menampilkan kelompok aset di desa itu (bendung, sumber air, dan lainnya). Ketuk kelompok untuk melihat daftarnya. Tombol **Lihat semua desa** kembali ke daftar desa.
-
-Sebaliknya, setiap aset menampilkan desanya. Misalnya pada bendung Gendol tertulis **Desa Pakukerto, Kec. Sukorejo**. Di rincian aset, tombol **Aset lain di desa ini** membuka daftar aset di desa yang sama. Kolom cari di daftar aset juga bisa dipakai untuk mengetik nama desa. Pada tab **Ringkasan** setiap daerah irigasi ada baris **Letak aset** yang menyebut desa-desa tempat asetnya berada.
-
-Desa ditentukan dari koordinat aset dan peta batas desa Kabupaten Pasuruan, jadi aset yang berada tepat di perbatasan bisa terbaca masuk desa tetangga.
-
 ## Menambah foto
 
-1. Buka aplikasi. Layar pertama menampilkan ringkasan UPT Pengelolaan Sumber Daya Air Purwosari. Gulir ke bagian **Pilih juru pengairan** lalu ketuk **nama juru** Anda. Bila Anda sudah pernah memilih, tombol **Lanjutkan sebagai Juru ...** ada di atas daftar nama.
+1. Buka aplikasi, pilih **nama juru** Anda.
 2. Pilih **daerah irigasi** yang sedang dikunjungi.
 3. Buka tab **Bangunan**, lalu ketuk bangunannya. Bisa juga ketuk titik hijau di peta, lalu tekan **Detail**.
 4. Pada **Tambah foto atau laporkan kondisi**:
