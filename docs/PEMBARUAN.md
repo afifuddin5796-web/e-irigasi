@@ -75,7 +75,10 @@ Simpan juga berkas KMZ baru di folder `data_sumber` di komputer Anda. Bila suatu
 
 ## 7. Yang masih memakai skrip (jarang)
 
+- Batas desa berubah atau berasal dari berkas lain: jalankan `python tools/bangun_desa.py "data_sumber/BATAS DESA KAB PASURUAN.kmz" desa.json`, lalu unggah `desa.json` yang baru. Aset baru (titik atau DI baru) otomatis ikut dikelompokkan ke desa karena desa dihitung dari koordinat, tanpa perlu membuat ulang data.
+
 - DI yang namanya berubah di Excel.
+- Skema jaringan (DXF) yang berubah: letakkan DXF terbaru di `data_sumber`, lalu jalankan `python tools/bangun_skema.py data_sumber .`. Semua lembar (skema daerah irigasi, konstruksi, sosiohidro, operasi) dan legenda dibuat ulang ke folder `skema`. Unggah folder `skema` yang baru ke GitHub memakai GitHub Desktop.
 - Skema jaringan (DXF) yang berubah.
 
 Untuk keduanya, jalankan `tools/bangun_data.py` dan `tools/bangun_skema.py` (lihat README).

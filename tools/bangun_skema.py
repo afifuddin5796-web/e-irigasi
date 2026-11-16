@@ -28,12 +28,14 @@ for f in glob.glob(os.path.join(SUMBER,'**','*.dxf'),recursive=True):
         if not mk: unk.append(b); continue
         did=keys[mk[0]]
     if did not in best or yr>best[did][1]: best[did]=(f,yr)
-os.makedirs(os.path.join(OUT,'skema'),exist_ok=True); gagal=[]
+os.makedirs(os.path.join(OUT,'skema'),exist_ok=True); gagal=[]; leg=None
 for did,(f,yr) in sorted(best.items()):
     try: r=skema_extract.skema(f)
     except Exception as e: r=None
     if not r: gagal.append(os.path.basename(f)); continue
-    json.dump(r,open(os.path.join(OUT,'skema',f'{did}.json'),'w'),ensure_ascii=False,separators=(',',':'))
+    json.dump(dict(sheets=r['sheets']),open(os.path.join(OUT,'skema',f'{did}.json'),'w'),ensure_ascii=False,separators=(',',':'))
+    if r['leg'] and (leg is None or len(r['leg']['T'])+sum(len(v) for v in r['leg']['P'].values())>len(leg['T'])+sum(len(v) for v in leg['P'].values())): leg=r['leg']
+if leg: json.dump(dict(sheets=[leg]),open(os.path.join(OUT,'skema','legenda.json'),'w'),ensure_ascii=False,separators=(',',':'))
 print('skema dibuat:',len(best)-len(gagal),'dari',len(DB['di']),'DI')
 print('DXF tak terpetakan:',unk); print('DXF gagal dibaca:',gagal)
 print('DI tanpa DXF:',[d['nama'] for d in DB['di'] if d['id'] not in best])

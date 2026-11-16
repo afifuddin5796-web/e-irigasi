@@ -88,6 +88,13 @@ a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 .sr i{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#ff2d55;border:2px solid #fff;box-shadow:0 0 14px 6px #ff2d55}
 @keyframes dn{from{transform:scale(.3);opacity:1}to{transform:scale(1.6);opacity:0}}
 @media(prefers-reduced-motion:reduce){.sr::before,.sr::after{animation:none}}
+.hero{background:linear-gradient(135deg,#0d3346,#111b2f 65%);border:1px solid #22d3ee66;border-radius:16px;padding:18px;margin-bottom:6px}
+.hk{color:var(--cy);font-weight:800;font-size:14px;line-height:1.35}
+.hn{font-size:42px;font-weight:800;line-height:1.1;margin-top:8px}.hn small{font-size:18px;color:var(--mu);font-weight:600}
+.hl{color:var(--mu);font-size:13px}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.chip{background:var(--s1);border:1px solid var(--ln);border-radius:10px;padding:10px 12px}
+.chip b{display:block;font-size:20px;font-weight:800}.chip span{color:var(--mu);font-size:12px}
 .imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
 </style>
 </head>
@@ -99,27 +106,40 @@ a.btn{text-decoration:none;color:var(--tx);display:inline-block}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},DN=[],ADM=false,MSG='';
+let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,KO={},DN=[],EV={},ADM=false,JU='',MSG='';
 const $=s=>document.querySelector(s),app=$('#app'),n1=(x,d=1)=>(+x||0).toLocaleString('id-ID',{maximumFractionDigits:d}),
 esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const baku=d=>{if(OV[d.nama]!=null)return OV[d.nama];if(d.bakuEdit!=null)return d.bakuEdit;const x=d.tanam&&d.tanam.baku;if(!x)return d.bakuKmz;return Math.abs(x-d.bakuKmz)/x>.15?Math.max(x,d.bakuKmz):x};
-try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');DN=JSON.parse(localStorage.getItem('dn')||'[]');ADM=localStorage.getItem('adm')==='1'}catch(e){}
-fetch('data.json').then(r=>r.json()).then(j=>{DB=j;limpas();applyDn();applyUp();applyKz();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
-$('#back').onclick=()=>{if(st.d){st.d=null}else if(st.k){st.k=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
+try{JU=localStorage.getItem('juru')||'';OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null');KO=JSON.parse(localStorage.getItem('kz')||'{}');DN=JSON.parse(localStorage.getItem('dn')||'[]');EV=JSON.parse(localStorage.getItem('elev')||'{}');ADM=localStorage.getItem('adm')==='1'}catch(e){}
+fetch('data.json').then(r=>r.json()).then(j=>{DB=j;EV={...(DB.elev||{}),...EV};limpas();applyDn();applyUp();applyKz();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
+$('#back').onclick=()=>{if(st.d){st.d=null}else if(st.k){st.k=null}else if(st.w!=null){st.w=null;st.v='wil'}else{st.j=null;st.w=null;}route()};
 function route(){$('#adm').hidden=!ADM;if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
 function home(){
-  $('#ttl').innerHTML='e-Irigasi<small>UPTD Purwosari · Periode '+esc(DB.periode)+'</small>';
-  app.innerHTML='<p class="lead">Pilih juru pengairan untuk melihat daerah irigasi yang menjadi tanggung jawab Anda.</p><div class="juru">'+
-  DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
-  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});if(ADM)xl();
+  $('#ttl').innerHTML='e-Irigasi<small>Periode '+esc(DB.periode)+'</small>';
+  const L=DB.di,B=L.reduce((s,d)=>s+baku(d),0),PK=L.reduce((s,d)=>s+(+d.panjangKm||0),0),C={};let NA=0;
+  L.forEach(d=>d.bangunan.forEach(b=>{const k=kat(b[0]);C[k]=(C[k]||0)+1;NA++}));
+  const T={padi:0,tebu:0,palawija:0,bero:0,panen:0};let nt=0;
+  L.forEach(d=>{if(d.tanam){nt++;for(const k in T)T[k]+=+d.tanam[k]||0}});
+  let lb=0,ll=0;L.forEach(d=>(d.limpasan||[]).forEach(x=>{if(x.jenis=='bendung'){lb++;if((x.q||[]).some(v=>v>0))ll++}}));
+  const bars=[['Padi',T.padi,'#a3e635'],['Tebu',T.tebu,'#22d3ee'],['Palawija',T.palawija,'#fbbf24'],['Bero',T.bero,'#fb7185'],['Habis panen',T.panen,'#c4b5fd']];
+  app.innerHTML=`<section class="hero"><div class="hk">UPT Pengelolaan Sumber Daya Air Purwosari</div><div class="hn">${n1(B,0)} <small>ha</small></div><div class="hl">Luas baku sawah seluruh daerah irigasi</div><div class="cards" style="margin-top:14px">`+
+   [['Daerah irigasi',n1(L.length,0)],['Juru pengairan',n1(DB.juru.length,0)],['Panjang saluran',n1(PK,0)+' <small>km</small>'],['Total aset irigasi',n1(NA,0)]].map(x=>`<div class="card"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')+`</div></section>`+
+   (nt?`<h2>Realisasi tanam periode ${esc(DB.periode)}</h2>`+bars.map(r=>`<div class="bar"><span>${r[0]}</span><div><i style="width:${Math.min(100,B?r[1]/B*100:0)}%;background:${r[2]}"></i></div><b>${n1(r[1],0)} ha</b></div>`).join('')+`<p class="note">Persentase terhadap luas baku seluruhnya.${nt<L.length?' Data tanaman terbaca untuk '+nt+' dari '+L.length+' daerah irigasi.':''}</p>`:'')+
+   `<h2>Aset irigasi</h2><div class="chips">`+KAT.filter(k=>C[k[0]]).map(k=>`<div class="chip" style="border-left:4px solid ${KC[k[0]]}"><b>${n1(C[k[0]],0)}</b><span>${k[1]}</span></div>`).join('')+`</div>`+
+   (lb?`<p class="note">Limpasan (loberan) tercatat di ${ll} dari ${lb} bendung yang diukur pada periode ini.</p>`:'')+
+   `<h2>Pilih juru pengairan</h2>`+(JU&&DB.juru.includes(JU)?`<div class="act" style="margin:0 0 12px"><button class="btn p" id="lj" type="button">Lanjutkan sebagai Juru ${esc(JU)}</button></div>`:'')+
+   '<div class="juru">'+DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
+  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;JU=st.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});
+  const lj=$('#lj');if(lj)lj.onclick=()=>{st.j=JU;route()};
+  if(ADM)xl();
 }
 function list(){
   const a=DB.di.filter(d=>d.juru===st.j);st.v=st.v||'aset';
-  $('#ttl').innerHTML='Juru '+esc(st.j)+'<small>'+(st.k?esc(KATN[st.k]):st.v=='aset'?'Aset irigasi':'Pilih daerah irigasi')+'</small>';
-  const tabs=st.k?'':'<div class="tabs" role="tablist" style="margin-top:0">'+[['aset','Aset irigasi'],['di','Daerah irigasi']].map(x=>`<button role="tab" data-v="${x[0]}" aria-selected="${st.v==x[0]}">${x[1]}</button>`).join('')+'</div>';
+  $('#ttl').innerHTML='Juru '+esc(st.j)+'<small>'+(st.k?esc(KATN[st.k]):st.v=='aset'?'Aset irigasi':st.v=='wil'?'Wilayah desa':'Pilih daerah irigasi')+(st.w!=null?' · '+(st.w<0?'di luar data desa':'Desa '+esc(dNama(st.w))):'')+'</small>';
+  const tabs=st.k||st.w!=null?'':'<div class="tabs" role="tablist" style="margin-top:0">'+[['aset','Aset irigasi'],['wil','Wilayah (desa)'],['di','Daerah irigasi']].map(x=>`<button role="tab" data-v="${x[0]}" aria-selected="${st.v==x[0]}">${x[1]}</button>`).join('')+'</div>';
   app.innerHTML=tabs+'<div id="lv"></div>';
   app.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.v=b.dataset.v;route()});
-  st.v=='di'?listDI(a):listAset(a);
+  st.v=='di'?listDI(a):st.v=='wil'?listWil(a):listAset(a);
 }
 function listDI(a){
   $('#lv').innerHTML=(ADM?diform():'')+'<input type="search" id="q" placeholder="Cari daerah irigasi" aria-label="Cari daerah irigasi"><div id="ls"></div>';if(ADM)dibind();
@@ -127,24 +147,49 @@ function listDI(a){
     $('#ls').querySelectorAll('.row').forEach(b=>b.onclick=()=>{st.d=DB.di.find(d=>d.id==b.dataset.i);st.tab='ring';route()})};
   $('#q').oninput=draw;draw();
 }
+async function listWil(a){
+  const lv=$('#lv');lv.innerHTML='<p class="note">Memuat batas desa…</p>';
+  try{await muatDesa()}catch(e){lv.innerHTML='<p class="lead">Batas desa belum bisa dimuat. Pastikan berkas desa.json ada di repositori, dan periksa sinyal.</p>';return}
+  if(st.v!='wil'||!st.j)return;
+  const m={};a.forEach(d=>d.bangunan.forEach(b=>{const w=desaAset(b),k=kat(b[0]),r=m[w]=m[w]||{n:0,bd:0,sm:0,di:new Set()};r.n++;if(k=='bendung')r.bd++;if(k=='sumber')r.sm++;r.di.add(d.id)}));
+  const ids=Object.keys(m).map(Number).sort((p,q)=>(p<0)-(q<0)||dNama(p).localeCompare(dNama(q)));
+  lv.innerHTML='<input type="search" id="q" placeholder="Cari desa atau kecamatan" aria-label="Cari desa"><div id="ls"></div>';
+  const draw=()=>{const q=$('#q').value.toLowerCase(),L=ids.filter(w=>(dNama(w)+' '+dKec(w)).toLowerCase().includes(q)||(w<0&&'di luar data desa'.includes(q)));
+    $('#ls').innerHTML='<p class="note">'+L.length+' desa</p>'+L.map(w=>{const r=m[w];return `<button class="row" data-w="${w}"><b>${w<0?'Di luar data desa':'Desa '+esc(dNama(w))}</b><em>${r.n} aset</em><span>${w<0?'':'Kec. '+esc(dKec(w))+' · '}${r.bd} bendung · ${r.sm} sumber air · ${r.di.size} DI</span><span></span></button>`}).join('');
+    $('#ls').querySelectorAll('.row').forEach(b=>b.onclick=()=>{st.w=+b.dataset.w;st.v='aset';st.k=null;route()})};
+  $('#q').oninput=draw;draw();
+}
 function listAset(a){
-  const lv=$('#lv'),A=[];a.forEach(d=>d.bangunan.forEach((b,i)=>A.push({d,i,b,k:kat(b[0])})));
+  const lv=$('#lv');let A=[];a.forEach(d=>d.bangunan.forEach((b,i)=>A.push({d,i,b,k:kat(b[0]),w:desaAset(b)})));
+  if(!DSA)muatDesa().then(()=>{if(st.j&&!st.d&&st.v=='aset')route()}).catch(()=>{});
+  if(st.w!=null){if(!DSA){lv.innerHTML='<p class="note">Memuat batas desa…</p>';return}A=A.filter(x=>x.w===st.w)}
   if(!st.k){
     const c={},dd={};A.forEach(x=>{c[x.k]=(c[x.k]||0)+1;(dd[x.k]=dd[x.k]||new Set()).add(x.d.id)});
-    lv.innerHTML='<div class="cards"><div class="card"><span>Daerah irigasi</span><b>'+a.length+'</b></div><div class="card"><span>Total aset</span><b>'+A.length+'</b></div><div class="card"><span>Baku sawah</span><b>'+n1(a.reduce((s,d)=>s+baku(d),0),0)+' <small>ha</small></b></div></div><h2>Kelompok aset</h2><div class="juru">'+
+    lv.innerHTML=(st.w!=null?'<div class="act" style="margin:0 0 10px"><button class="btn" id="sw" type="button">Lihat semua desa</button></div>':'')+'<div class="cards"><div class="card"><span>Daerah irigasi</span><b>'+(st.w!=null?new Set(A.map(x=>x.d.id)).size:a.length)+'</b></div><div class="card"><span>Total aset</span><b>'+A.length+'</b></div>'+(st.w!=null?'':'<div class="card"><span>Baku sawah</span><b>'+n1(a.reduce((s,d)=>s+baku(d),0),0)+' <small>ha</small></b></div>')+'</div><h2>Kelompok aset</h2><div class="juru">'+
       KAT.filter(k=>c[k[0]]).map(k=>`<button class="jb" data-k="${k[0]}" style="border-left:4px solid ${KC[k[0]]}"><b>${k[1]}</b><span>${c[k[0]]} aset · ${dd[k[0]].size} DI</span></button>`).join('')+'</div>';
-    lv.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.k=b.dataset.k;route()});return}
-  lv.innerHTML='<input type="search" id="q" placeholder="Cari nama aset atau daerah irigasi" aria-label="Cari aset"><div id="ls"></div>';
-  let lim=300;
-  const draw=()=>{
-    const q=$('#q').value.toLowerCase(),L=A.filter(x=>x.k==st.k&&((x.b[0]||'').toLowerCase().includes(q)||x.d.nama.toLowerCase().includes(q))).sort((p,r)=>p.d.nama.localeCompare(r.d.nama)||(p.b[0]||'').localeCompare(r.b[0]||'',undefined,{numeric:true}));
+    lv.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.k=b.dataset.k;route()});const sw=$('#sw');if(sw)sw.onclick=()=>{st.w=null;st.v='wil';route()};return}
+  const pakaiEl=st.k=='bendung'||st.k=='sumber',kk=st.k;if(!st.u)st.u='el';
+  lv.innerHTML='<input type="search" id="q" placeholder="Cari nama aset, daerah irigasi, atau desa" aria-label="Cari aset">'+(pakaiEl?'<div class="tabs" style="margin:0 0 10px">'+[['el','Dari tertinggi'],['di','Per daerah irigasi']].map(x=>`<button data-u="${x[0]}">${x[1]}</button>`).join('')+'</div><p class="note" id="elm"></p>':'')+'<div id="ls"></div>';
+  let lim=300,pesan='';
+  const pts=()=>A.filter(x=>x.k==kk).map(x=>[x.b[1],x.b[2]]),kurang=()=>pts().some(p=>EV[p[0]+','+p[1]]==null),
+  ev=x=>{const v=EV[ek(x.b)];return v==null?-1e9:v},
+  draw=()=>{
+    const q=$('#q').value.toLowerCase(),F=A.filter(x=>x.k==kk&&((x.b[0]||'').toLowerCase().includes(q)||x.d.nama.toLowerCase().includes(q)||dNama(x.w).toLowerCase().includes(q))),byEl=pakaiEl&&st.u=='el',nat=(p,r)=>(p.b[0]||'').localeCompare(r.b[0]||'',undefined,{numeric:true});
+    const L=byEl?F.sort((p,r)=>ev(r)-ev(p)||nat(p,r)):F.sort((p,r)=>p.d.nama.localeCompare(r.d.nama)||nat(p,r));
     let h='<p class="note">'+L.length+' aset</p>',last='';
-    L.slice(0,lim).forEach(x=>{if(x.d.nama!==last){h+='<h2>DI '+esc(x.d.nama)+'</h2>';last=x.d.nama}h+=`<button class="row" data-d="${x.d.id}" data-i="${x.i}"><b>${esc(x.b[0]||'(tanpa nama)')}</b><em>›</em><span>${x.b[1]}, ${x.b[2]}</span><span></span></button>`});
+    L.slice(0,lim).forEach(x=>{
+      if(!byEl&&x.d.nama!==last){h+='<h2>DI '+esc(x.d.nama)+'</h2>';last=x.d.nama}
+      const e=EV[ek(x.b)];
+      h+=`<button class="row" data-d="${x.d.id}" data-i="${x.i}"><b>${esc(x.b[0]||'(tanpa nama)')}</b><em>${e!=null?e+' m':'›'}</em><span>${byEl?'DI '+esc(x.d.nama)+' · ':''}${x.w>=0?'Desa '+esc(dNama(x.w))+' · ':''}${x.b[1]}, ${x.b[2]}</span><span></span></button>`});
     if(L.length>lim)h+='<div class="act"><button class="btn" id="mr">Tampilkan lebih banyak</button></div>';
-    $('#ls').innerHTML=h;
+    $('#ls').innerHTML=h;lv.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.u==st.u));const em=$('#elm');if(em)em.textContent=pesan;
     $('#ls').querySelectorAll('.row').forEach(r=>r.onclick=()=>{const d=DB.di.find(z=>z.id==r.dataset.d),b=d.bangunan[r.dataset.i];st.d=d;st.tab='bgn';route();bgSheet(d,b)});
-    const m=$('#mr');if(m)m.onclick=()=>{lim+=300;draw()}};
-  $('#q').oninput=()=>{lim=300;draw()};draw();
+    const m=$('#mr');if(m)m.onclick=()=>{lim+=300;draw()}},
+  ambil=()=>{if(!pakaiEl)return;if(!kurang()){pesan=ELT;return}pesan='Mengambil data ketinggian…';
+    muatElev(pts()).then(()=>{pesan=kurang()?'Sebagian aset belum punya data ketinggian dan ditaruh di bagian akhir. '+ELT:ELT;if(st.k===kk&&$('#ls'))draw()}).catch(()=>{pesan='Ketinggian belum bisa diambil, periksa sinyal. Ketuk Dari tertinggi untuk mencoba lagi.';st.u='di';if(st.k===kk&&$('#ls'))draw()})};
+  lv.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.u=b.dataset.u;if(st.u=='el'&&kurang())ambil();else if(st.u=='el')pesan=ELT;lim=300;draw()});
+  $('#q').oninput=()=>{lim=300;draw()};
+  if(pakaiEl&&st.u=='el')ambil();draw();
 }
 function detail(){
   const d=st.d,t=d.tanam;
@@ -182,10 +227,11 @@ function tab(){
     drawBgn(el,d);if(fotoOn())muatLap(d).then(()=>{if(st.tab=='bgn'&&st.d===d)drawBgn(el,d)});
   }else{
     const bk=baku(d),rows=t?[['Padi',t.padi,'#a3e635'],['Tebu',t.tebu,'#22d3ee'],['Palawija',t.palawija,'#fbbf24'],['Bero',t.bero,'#fb7185'],['Habis panen',t.panen,'#c4b5fd']]:[];
-    el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div>'+(ADM?edform(d,bk)+kmzform(d)+asetform(d):'')+
+    el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div><p class="note" id="wl"></p>'+(ADM?edform(d,bk)+kmzform(d)+asetform(d):'')+
     (t?'<h2>Tanaman periode '+esc(DB.periode)+'</h2>'+rows.map(r=>`<div class="bar"><span>${r[0]}</span><div><i style="width:${Math.min(100,bk?r[1]/bk*100:0)}%;background:${r[2]}"></i></div><b>${n1(r[1])} ha</b></div>`).join('')+(t.persiapan?`<p class="note">Persiapan padi (pembibitan dan garap tanah): ${n1(t.persiapan)} ha.</p>`:''):'<p class="note">Data tanaman untuk DI ini belum terbaca dari Excel.</p>')+
     (ADM&&t&&Math.abs(t.baku-d.bakuKmz)/Math.max(t.baku,1)>.15?`<p class="note">Luas baku Excel ${n1(t.baku,0)} ha dan poligon peta ${n1(d.bakuKmz,0)} ha berbeda jauh. Yang dipakai adalah nilai terbesar, kecuali sudah diubah.</p>`:'');
     if(ADM){edbind(d);kmzbind(d);asetbind(d)}
+    muatDesa().then(()=>{const e=$('#wl');if(!e||st.d!==d)return;const c={};d.bangunan.forEach(b=>{const k=desaAset(b);c[k]=(c[k]||0)+1});e.textContent='Letak aset: '+Object.entries(c).sort((p,q)=>q[1]-p[1]).map(([k,n])=>(k<0?'di luar data desa':'Desa '+dNama(+k))+' ('+n+')').join(', ')}).catch(()=>{});
   }
 }
 /*P*/
@@ -227,7 +273,7 @@ function xl(){
   $('#xs').textContent=MSG||(loc()?'Perubahan di perangkat ini: '+loc()+'. Periode data: '+DB.periode+'.':'Periode data saat ini: '+DB.periode+'.');
   $('#xf').onchange=imp;$('#dl').onclick=dl;const r=$('#rx');if(r)r.onclick=()=>{try{['up','ov','kz','lt','dn'].forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()};
 }
-function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});DB.versi=Date.now();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
+function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});DB.versi=Date.now();DB.elev=EV;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
 async function imp(e){
   const f=e.target.files[0];if(!f)return;$('#xs').textContent='Membaca file…';
   try{
@@ -251,25 +297,43 @@ function bFind(d,s){
   if(m=s.match(/^Bendung\/?\s*(.+)/i)){const rx=new RegExp('Bd\\.?\\s*'+m[1].trim().replace(/[^a-z0-9 ]/ig,'.?'),'i');return d.bangunan.find(b=>rx.test(b[0]))}
   if(m=s.match(/^(.+?)\s+(\d+)\s*(ki|ka|tg)\b/i))return d.bangunan.find(b=>{const q=b[0].match(/^\d*\s*([A-Za-z]{1,4})\.?\s*(\d+)\s*(ki|ka|tg)$/i);return q&&q[2]==m[2]&&q[3].toLowerCase()==m[3].toLowerCase()&&sub(q[1],m[1])})
 }
+const SKC={p:'#ff5d5d',s:'#ffb454',t:'#2ee6c8',b:'#a3e635',x:'#6f84a8'},SKP={p:'#b91c1c',s:'#c2410c',t:'#0f766e',b:'#4d7c0f',x:'#475569'};
+function skG(sh,o){
+  const col=o.cetak?SKP:SKC,tx0=o.cetak?'#111827':'#e8eef7',pt=o.cetak?'#92400e':'#fbbf24',hl=o.cetak?'#166534':'#a3e635',kx=o.ne?sh.w/700:1,vs=o.ne?'':' vector-effect="non-scaling-stroke"',hot={};
+  let g='',rects='';
+  for(const c in sh.P)g+=`<path d="${sh.P[c]}" fill="none" stroke="${col[c]}" stroke-width="${(c=='x'?1:2)*kx}"${vs}/>`;
+  for(const c in (sh.F||{}))g+=`<path d="${sh.F[c]}" fill="${col[c]}" fill-opacity=".9" stroke="none"/>`;
+  sh.C.forEach(c=>g+=`<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="none" stroke="${col[c[3]]||col.x}" stroke-width="${1.5*kx}"${vs}/>`);
+  sh.T.forEach((t,i)=>{
+    const [x,y,hh,rot,tx,att]=t,L=tx.split('\n'),k=nk(L[0]),fs=hh*.95,
+    ty=o.tm?(k in o.tm?'t':/^B+\.?\s*[A-Z]{1,4}\.?\s*\d+/i.test(L[0])?'n':/^Bendung/i.test(L[0])?'d':k in o.dm?'q':''):'',
+    anc=[1,4,7].includes(att)?'start':[3,6,9].includes(att)?'end':'middle',dy=att<=3?fs*.85:att<=6?fs*.35:0,
+    w=Math.max(...L.map(l=>l.length))*fs*.55,bx=anc=='start'?x:anc=='end'?x-w:x-w/2,ry=att<=3?y:att<=6?y-fs*.5:y-fs;
+    if(ty){hot[i]=ty;if(!o.ne)rects+=`<rect x="${bx-1}" y="${ry-1}" width="${w+2}" height="${fs*1.2*L.length+2}" fill="transparent" data-i="${i}" style="cursor:pointer"/>`}
+    g+=`<text x="${x}" y="${y+dy}" font-size="${fs}" text-anchor="${anc}" fill="${ty=='t'?pt:ty?hl:tx0}" transform="rotate(${-rot} ${x} ${y})"${o.ne?'':' style="pointer-events:none"'}>`+L.map((l,j)=>`<tspan x="${x}" dy="${j?fs*1.15:0}">${esc(l)}</tspan>`).join('')+'</text>'});
+  return{g,rects,hot}}
+function unduhSkema(sh,cetak,nama){
+  const W=2400,H=Math.round(W*sh.h/sh.w),bg=cetak?'#ffffff':'#0a1120',svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${sh.w} ${sh.h}" font-family="Arial, Helvetica, sans-serif"><rect width="${sh.w}" height="${sh.h}" fill="${bg}"/>${skG(sh,{cetak,ne:true}).g}</svg>`,
+  img=new Image(),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+  img.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(img,0,0,W,H);URL.revokeObjectURL(url);
+    c.toBlob(b=>{if(!b){toast('Gambar gagal dibuat');return}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=nama+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast('Gambar diunduh')},'image/png')};
+  img.onerror=()=>toast('Gambar gagal dibuat');img.src=url}
 async function skm(el){
   const d=st.d;el.innerHTML='<p class="note">Memuat skema…</p>';
   try{if(!SK[d.id]){const r=await fetch('skema/'+d.id+'.json');if(!r.ok)throw 0;SK[d.id]=await r.json()}}catch(e){el.innerHTML='<p class="lead">Skema belum tersedia untuk DI ini. Skema dibuat dari berkas DXF, jadi DI yang baru ditambahkan belum punya skema.</p>';return}
   if(st.tab!='skm'||st.d!==d)return;
-  const S=SK[d.id],tm={},dm={},col={p:'#ff5d5d',s:'#ffb454',t:'#2ee6c8',b:'#a3e635',x:'#6f84a8'},hot={};
+  const SH=SK[d.id].sheets||[SK[d.id]];if(st.shd!==d.id){st.shd=d.id;st.sh=0}
+  let leg=false;if(st.sh==='leg'){try{if(!SK.leg){const r=await fetch('skema/legenda.json');if(!r.ok)throw 0;SK.leg=await r.json()}leg=true}catch(e){st.sh=0}}
+  if(st.tab!='skm'||st.d!==d)return;
+  const S=leg?SK.leg.sheets[0]:SH[Math.min(+st.sh||0,SH.length-1)],tm={},dm={};
   d.ters.forEach(t=>tm[nk(t.n)]=t);d.debit.forEach(x=>dm[nk(x.n)]=x);
-  let h='<div class="leg"><span><i style="background:#ff5d5d"></i>Primer</span><span><i style="background:#ffb454"></i>Sekunder</span><span><i style="background:#2ee6c8"></i>Tersier</span><span><i style="background:#fbbf24"></i>Petak</span><span><i style="background:#a3e635"></i>Bangunan/bendung</span></div>'+
-  `<div class="skw"><svg id="sk" viewBox="0 0 ${S.w} ${S.h}" role="img" aria-label="Skema jaringan irigasi">`;
-  for(const c in S.P)h+=`<path d="${S.P[c]}" fill="none" stroke="${col[c]}" stroke-width="${c=='x'?1:2}" vector-effect="non-scaling-stroke"/>`;
-  S.C.forEach(c=>h+=`<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="none" stroke="${col[c[3]]||col.x}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`);
-  S.T.forEach((t,i)=>{
-    const [x,y,hh,rot,tx,att]=t,L=tx.split('\n'),k=nk(L[0]),fs=hh*.95,
-    ty=k in tm?'t':/^B+\.?\s*[A-Z]{1,4}\.?\s*\d+/i.test(L[0])?'n':/^Bendung/i.test(L[0])?'d':k in dm?'q':'',
-    anc=[1,4,7].includes(att)?'start':[3,6,9].includes(att)?'end':'middle',dy=att<=3?fs*.85:att<=6?fs*.35:0,
-    w=Math.max(...L.map(l=>l.length))*fs*.55,bx=anc=='start'?x:anc=='end'?x-w:x-w/2,ry=att<=3?y:att<=6?y-fs*.5:y-fs;
-    if(ty){hot[i]=ty;h+=`<rect x="${bx-1}" y="${ry-1}" width="${w+2}" height="${fs*1.2*L.length+2}" fill="transparent" data-i="${i}" style="cursor:pointer"/>`}
-    h+=`<text x="${x}" y="${y+dy}" font-size="${fs}" text-anchor="${anc}" fill="${ty=='t'?'#fbbf24':ty?'#a3e635':'#e8eef7'}" transform="rotate(${-rot} ${x} ${y})" style="pointer-events:none">`+L.map((l,j)=>`<tspan x="${x}" dy="${j?fs*1.15:0}">${esc(l)}</tspan>`).join('')+'</text>';
-  });
-  el.innerHTML=h+'</svg></div><div id="pc" class="note">Ketuk huruf berwarna (petak, bangunan bagi, bendung) untuk melihat datanya. Geser dan cubit untuk memperbesar, ketuk dua kali untuk mengembalikan.</div>';
+  const r=skG(S,{tm:leg?null:tm,dm}),tabs=SH.length>1||true?'<div class="tabs" id="skt" style="flex-wrap:wrap">'+SH.map((s,i)=>`<button data-s="${i}" aria-selected="${!leg&&(+st.sh||0)==i}">${esc(SH.length>1?s.judul:'Skema')}</button>`).join('')+`<button data-s="leg" aria-selected="${leg}">Legenda</button></div>`:'';
+  el.innerHTML=tabs+'<div class="leg"><span><i style="background:#ff5d5d"></i>Primer</span><span><i style="background:#ffb454"></i>Sekunder</span><span><i style="background:#2ee6c8"></i>Tersier</span><span><i style="background:#fbbf24"></i>Petak</span><span><i style="background:#a3e635"></i>Bangunan/bendung</span></div>'+
+  `<div class="skw"><svg id="sk" viewBox="0 0 ${S.w} ${S.h}" role="img" aria-label="${esc(S.judul)}">${r.g}${r.rects}</svg></div>`+
+  '<div class="act" style="margin-top:10px"><button class="btn p" id="dl1" type="button">Unduh gambar (PNG)</button><button class="btn" id="dl2" type="button">Unduh untuk cetak (latar putih)</button></div>'+
+  '<div id="pc" class="note">Ketuk huruf berwarna (petak, bangunan bagi, bendung) untuk melihat datanya. Geser dan cubit untuk memperbesar, ketuk dua kali untuk mengembalikan.</div>';
+  el.querySelectorAll('#skt button').forEach(b=>b.onclick=()=>{st.sh=b.dataset.s=='leg'?'leg':+b.dataset.s;skm(el)});
+  const nm='skema-'+slug(d.nama)+'-'+slug(S.judul);$('#dl1').onclick=()=>unduhSkema(S,false,nm);$('#dl2').onclick=()=>unduhSkema(S,true,nm);
   const svg=$('#sk'),mvr=panzoom(svg,S);
   svg.addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!=null&&!mvr())skInfo(S,+i,tm,dm)});
 }
@@ -425,6 +489,26 @@ function cariLim(d,b){
   if(m.length==1)return m[0];
   if(P.length==1&&d.bangunan.filter(x=>kat(x[0])==jn).length==1)return P[0];return null}
 /*EL*/
+/*V*/
+const ek=b=>b[1]+','+b[2],ELT='Ketinggian: perkiraan dari Copernicus DEM 90 m (Open-Meteo), dalam meter di atas permukaan laut.';
+async function muatElev(pts){
+  const m=new Map();pts.forEach(p=>{const k=p[0]+','+p[1];if(EV[k]==null)m.set(k,p)});const need=[...m.values()];
+  for(let i=0;i<need.length;i+=100){
+    const ch=need.slice(i,i+100),r=await fetch('https://api.open-meteo.com/v1/elevation?latitude='+ch.map(p=>p[0]).join(',')+'&longitude='+ch.map(p=>p[1]).join(','));
+    if(!r.ok)throw new Error('elevasi '+r.status);const j=await r.json();
+    ch.forEach((p,k)=>{const e=j.elevation&&j.elevation[k];if(typeof e=='number')EV[p[0]+','+p[1]]=Math.round(e)});
+    try{localStorage.setItem('elev',JSON.stringify(EV))}catch(e){}}
+}
+/*EV2*/
+/*W*/
+let DSA=null,DSP=null;const DK={};
+const dTitle=s=>String(s||'').toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase()),
+dIn=(lat,lon,f)=>{let c=false;const n=f.length/2;for(let i=0,j=n-1;i<n;j=i++){const yi=f[2*i],xi=f[2*i+1],yj=f[2*j],xj=f[2*j+1];if((xi>lon)!==(xj>lon)&&lat<(yj-yi)*(lon-xi)/(xj-xi)+yi)c=!c}return c},
+dCari=(lat,lon)=>{if(!DSA)return -1;for(let k=0;k<DSA.length;k++){const b=DSA[k][2];if(lat>=b[0]&&lat<=b[2]&&lon>=b[1]&&lon<=b[3]&&dIn(lat,lon,DSA[k][3]))return k}return -1},
+dNama=k=>k>=0&&DSA?dTitle(DSA[k][0]):'',dKec=k=>k>=0&&DSA?dTitle(DSA[k][1]):'';
+function desaAset(b){if(!DSA)return -1;const k=b[1]+','+b[2];if(DK[k]===undefined)DK[k]=dCari(b[1],b[2]);return DK[k]}
+function muatDesa(){if(DSA)return Promise.resolve(DSA);if(!DSP)DSP=fetch('desa.json').then(r=>{if(!r.ok)throw new Error('desa.json '+r.status);return r.json()}).then(j=>DSA=j.d).catch(e=>{DSP=null;throw e});return DSP}
+/*EW*/
 let tp=0,tt;
 $('#ttl').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,2500);if(tp>=5){tp=0;ADM=!ADM;try{localStorage.setItem('adm',ADM?'1':'0')}catch(e){}toast(ADM?'Mode pengelola aktif':'Mode pengelola nonaktif');route()}};
 function sorot(name){
@@ -445,8 +529,9 @@ function drawBgn(el,d){
   el.querySelectorAll('.row').forEach(r=>r.onclick=()=>bgSheet(d,d.bangunan[r.dataset.i]))}
 async function bgSheet(d,b){
   const o=document.createElement('div');o.className='lb';let oleh='';try{oleh=localStorage.getItem('oleh')||''}catch(e){}
-  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">${KATN[kat(b[0])]} · DI ${esc(d.nama)} · ${b[1]}, ${b[2]}</p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sx">Tutup</button>${ADM?'<button class="btn" id="sh">Hapus aset</button>':''}</div><div id="bx"></div></div>`;
+  o.innerHTML=`<div class="lbi"><h2 style="margin:0">${esc(b[0]||'Bangunan')}</h2><p class="note" style="margin:0">${KATN[kat(b[0])]} · DI ${esc(d.nama)} · ${b[1]}, ${b[2]}${EV[b[1]+','+b[2]]!=null?' · ketinggian sekitar '+EV[b[1]+','+b[2]]+' m':''}<span id="bds"></span></p><div class="act"><button class="btn" id="s1">Salin koordinat</button><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(b[1],b[2])}">Buka di Maps</a><button class="btn" id="s2">Lihat di peta</button><button class="btn" id="sd" hidden>Aset lain di desa ini</button><button class="btn" id="sx">Tutup</button>${ADM?'<button class="btn" id="sh">Hapus aset</button>':''}</div><div id="bx"></div></div>`;
   document.body.appendChild(o);const x=()=>o.remove();o.onclick=e=>{if(e.target===o)x()};sorot(b[0]);
+  muatDesa().then(()=>{const k=desaAset(b),s=o.querySelector('#bds');if(!s)return;if(k>=0){s.textContent=' · Desa '+dNama(k)+', Kec. '+dKec(k);const bt=o.querySelector('#sd');bt.hidden=false;bt.onclick=()=>{x();st.d=null;st.w=k;st.v='aset';st.k=null;route()}}else s.textContent=' · di luar data desa'}).catch(()=>{});
   o.querySelector('#sx').onclick=x;const sh=o.querySelector('#sh');if(sh)sh.onclick=()=>{if(!confirm('Hapus aset "'+b[0]+'" dari peta DI '+d.nama+'?'))return;const i=d.bangunan.indexOf(b);if(i<0)return;d.bangunan.splice(i,1);persistGeo(d);x();route()};o.querySelector('#s1').onclick=()=>salin(b[1]+', '+b[2]);
   o.querySelector('#s2').onclick=()=>{x();sorot(b[0]);scrollTo({top:0,behavior:'smooth'})};
   const box=o.querySelector('#bx'),g=i=>box.querySelector(i);let pos=null;
