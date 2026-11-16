@@ -101,13 +101,31 @@ def tanam(n):
             return {k2:sum(c[k2] for c in ch) for k2 in ch[0] if k2 not in('_n','_o')}
     return None
 r6=list(wb['06 - O'].iter_rows(values_only=True))
-deb={}; curdi=None; nmr=None
+# Kolom K..U (11 kolom) = hari ke-1..11, kolom J = rencana, kolom V = debit rata-rata, kolom X (baris H) = lt/dt/ha
+def nval(x): return float(x) if isinstance(x,(int,float)) and not isinstance(x,bool) else None
+def hari(r): return [nval(r[c]) if c<len(r) else None for c in range(10,21)]
+def rata(a): return sum(a)/len(a)
+deb={}; lim={}; curdi=None; nmr=None; typ=leb=kon=None
 for i,r in enumerate(r6):
     if r[1] and str(r[1]).isupper() and str(r[1]) not in('JURU PENGAIRAN','UPTD','PURWOSARI'): curdi=str(r[1])
-    if r[2] and str(r[2]).strip(): nmr=str(r[2]).strip(); typ,leb,kon=r[4],r[5],r[6]
-    if r[8]=='Q->' and curdi and nmr and i>0 and r6[i-1][8]=='H->':
-        q=[num(x) for x in r[9:19] if isinstance(x,(int,float))]; h=[num(x) for x in r6[i-1][9:19] if isinstance(x,(int,float))]
-        if q and nmr not in('Limpasan',): deb.setdefault(curdi,[]).append(dict(n=nmr,q=round(sum(q)/len(q),1),h=round(sum(h)/len(h),1) if h else 0,tipe=typ,lebar=leb,kond=kon))
+    n2=str(r[2]).strip() if r[2] else ''
+    if n2.lower()=='limpasan':
+        hd=r6[i-1] if i>0 else None; hn=str(hd[2]).strip() if hd and hd[2] else ''
+        if curdi and hn and r[8]=='H->' and i+1<len(r6) and r6[i+1][8]=='Q->':
+            ban=None
+            if i+3<len(r6) and str(r6[i+2][3] or '').strip().lower().startswith('terjadi banj') and r6[i+2][8]=='H->':
+                bh=hari(r6[i+2]); bq=hari(r6[i+3]) if r6[i+3][8]=='Q->' else [None]*11
+                if any(x is not None for x in bh+bq): ban=dict(h=bh,q=bq,ket=str(r6[i+3][3] or '').strip())
+            lim.setdefault(curdi,[]).append(dict(n=hn,jenis='sumber' if hn.lower().startswith('ma') else 'bendung',tipe=hd[4],lebar=nval(r[5]),kond=r[6],h=hari(r),q=hari(r6[i+1]),qr=nval(r6[i+1][21]),banjir=ban))
+        nmr=n2; continue
+    if n2: nmr=n2; typ,leb,kon=r[4],r[5],r[6]
+    if r[8]=='Q->' and curdi and nmr and i>0 and r6[i-1][8]=='H->' and nmr!='Limpasan':
+        hr=hari(r6[i-1]); qd=hari(r); rh=nval(r6[i-1][9]); rq=nval(r[9])
+        if any(x is not None for x in qd+[rq]):
+            hs=[x for x in hr if x is not None]; qa=nval(r[21])
+            if qa is None:
+                a2=[x for x,hh in zip(qd,hr) if x is not None and hh is not None]; qa=rata(a2) if a2 else 0
+            deb.setdefault(curdi,[]).append(dict(n=nmr,q=round(qa,1),h=round(rata(hs),1) if hs else 0,tipe=typ,lebar=leb,kond=kon,rq=rq,rh=rh,hq=qd,hh=hr,dr=nval(r6[i-1][23])))
 OVR={'37 Karang Lebak':'Kr. Lebak','39 Sbr Titing':'Sumbertiting','42 Sbr Karang Labak':'Sbr. Karanglebak'}
 # --- gabung
 keys={norm(n):n for n in order}; out=[]; unm=[]
@@ -118,10 +136,10 @@ for k,(f,yr,nm) in sorted(best.items(),key=lambda x:x[1][2]):
     for pre,x in OVR.items():
         if os.path.basename(f).startswith(pre): xn=x
     if not xn: unm.append(nm)
-    dk=difflib.get_close_matches(norm(xn or nm),[norm(x) for x in deb],1,0.8)
-    dd=[v for x,v in deb.items() if dk and norm(x)==dk[0]]; dkk=dk[0] if dk else ''
+    cand=norm(xn or nm); dkeys=sorted({norm(x) for x in list(deb)+list(lim)}); allx={norm(n) for n in order}; dk=[cand] if cand in dkeys else [m for m in difflib.get_close_matches(cand,dkeys,1,0.8) if m not in allx]
+    dd=[v for x,v in deb.items() if dk and norm(x)==dk[0]]; lm=[v for x,v in lim.items() if dk and norm(x)==dk[0]]; dkk=dk[0] if dk else ''
     out.append(dict(id=len(out)+1,src=os.path.basename(f),nama=(xn or nm),juru=dij.get(xn,'Belum terdaftar'),tahun=yr,
-        tanam=tanam(xn) if xn else None,xk=xkeys(xn) if xn else [],ters=[{'n':c['_o'],**{k:round(c[k],2) for k in('baku','padi','tebu','palawija','bero','panen')}} for kk in (xkeys(xn) if xn else []) for c in (T5a.get(kk) or {'ch':[]})['ch'] if c['_n'].startswith('ters')][:60],dk=dkk,debit=list({x['n']:x for x in dd[0]}.values()) if dd else [],bakuKmz=round(sum(a[1] for a in A),1),
+        tanam=tanam(xn) if xn else None,xk=xkeys(xn) if xn else [],ters=[{'n':c['_o'],**{k:round(c[k],2) for k in('baku','padi','tebu','palawija','bero','panen')}} for kk in (xkeys(xn) if xn else []) for c in (T5a.get(kk) or {'ch':[]})['ch'] if c['_n'].startswith('ters')][:60],dk=dkk,debit=list({x['n']:x for x in dd[0]}.values()) if dd else [],limpasan=lm[0] if lm else [],bakuKmz=round(sum(a[1] for a in A),1),
         panjangKm=round(sum(s[1] for s in S)/1000,2),bangunan=B,saluran=S,areal=A))
 per=''
 for r in r5[:10]:
