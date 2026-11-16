@@ -25,6 +25,8 @@ def parse(path):
         elif ent is None and cur_blk not in(None,'?') and c in('10','20'):
             try: BASES.setdefault(cur_blk,{})[c]=float(v)
             except: pass
-        elif ent is not None: ent['p'].setdefault(c,[]).append(v)
+        elif ent is not None:
+            ent['p'].setdefault(c,[]).append(v)
+            if ent['t']=='HATCH': ent.setdefault('r',[]).append((c,v))
     if ent is not None and cur_blk is not None: blocks[cur_blk].append(ent)
     return blocks
